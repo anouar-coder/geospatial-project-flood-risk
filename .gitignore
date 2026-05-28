@@ -1,0 +1,19 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Raster data
+*.tif
+*.tiff
+
+# Large geojson outputs
+*.geojson
+
+# Animation outputs
+data/animation/
+
+# Notebook cache
+.ipynb_checkpoints/

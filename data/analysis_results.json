@@ -1,0 +1,59 @@
+{
+  "dem_info": {
+    "rows": 5400,
+    "cols": 6120
+  },
+  "scenarios": {
+    "normal": {
+      "description": "Typical spring day \u2014 no flood risk",
+      "total_rain_mm": 2.0,
+      "sea_level_rise_m": 0.0,
+      "mean_runoff_mm": 0.0,
+      "flooded_area_km2": 0.0,
+      "flooded_pct": 0.0,
+      "max_depth_m": 0.008,
+      "mean_depth_m": 0,
+      "risk_counts": {
+        "none": 33048000,
+        "low": 0,
+        "medium": 0,
+        "high": 0,
+        "extreme": 0
+      }
+    },
+    "moderate": {
+      "description": "Significant 3-day storm event",
+      "total_rain_mm": 55.5,
+      "sea_level_rise_m": 0.3,
+      "mean_runoff_mm": 21.58,
+      "flooded_area_km2": 9015.65,
+      "flooded_pct": 28.7,
+      "max_depth_m": 4.048,
+      "mean_depth_m": 0.224,
+      "risk_counts": {
+        "none": 23564772,
+        "low": 6652908,
+        "medium": 2604655,
+        "high": 215567,
+        "extreme": 10098
+      }
+    },
+    "extreme": {
+      "description": "Catastrophic multi-day event",
+      "total_rain_mm": 176.0,
+      "sea_level_rise_m": 1.2,
+      "mean_runoff_mm": 126.98,
+      "flooded_area_km2": 15988.89,
+      "flooded_pct": 50.89,
+      "max_depth_m": 22.844,
+      "mean_depth_m": 0.84,
+      "risk_counts": {
+        "none": 16229880,
+        "low": 6216693,
+        "medium": 5134167,
+        "high": 2348473,
+        "extreme": 3118787
+      }
+    }
+  }
+}

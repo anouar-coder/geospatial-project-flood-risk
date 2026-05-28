@@ -1,0 +1,27 @@
+{
+  "location": {
+    "name": "Tunis, Tunisia",
+    "lat": 36.8,
+    "lon": 10.18
+  },
+  "scenarios": {
+    "normal": {
+      "total_rain_mm": 2.0,
+      "sea_level_rise_m": 0.0,
+      "description": "Typical spring day \u2014 no flood risk",
+      "return_period_years": "< 2"
+    },
+    "moderate": {
+      "total_rain_mm": 55.5,
+      "sea_level_rise_m": 0.3,
+      "description": "Significant 3-day storm event",
+      "return_period_years": "~10"
+    },
+    "extreme": {
+      "total_rain_mm": 176.0,
+      "sea_level_rise_m": 1.2,
+      "description": "Catastrophic multi-day event",
+      "return_period_years": "~100"
+    }
+  }
+}
