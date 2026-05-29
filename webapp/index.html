@@ -1,974 +1,1348 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flood Risk Analysis — Tunisia</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#e6edf3;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FloodSense · Tunisia Flood Risk Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root {
+  --bg:       #09090b;
+  --surface:  #111113;
+  --panel:    #18181b;
+  --border:   #27272a;
+  --border2:  #3f3f46;
+  --muted:    #71717a;
+  --sub:      #a1a1aa;
+  --text:     #fafafa;
+  --accent:   #38bdf8;
+  --none:     #52525b;
+  --low:      #0ea5e9;
+  --medium:   #f59e0b;
+  --high:     #f97316;
+  --extreme:  #ef4444;
+  --green:    #22c55e;
+  --font:     'DM Sans', sans-serif;
+  --mono:     'DM Mono', monospace;
+  --r:        8px;
+  --r2:       12px;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; }
 
-    /* Header */
-    header{background:#161b22;border-bottom:1px solid #30363d;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:1000}
-    .htitle{display:flex;align-items:center;gap:12px}
-    .htitle h1{font-size:15px;font-weight:600}
-    .htitle span{font-size:11px;color:#8b949e}
-    .header-actions{display:flex;gap:8px;align-items:center}
-    .hbtn{background:#21262d;border:1px solid #30363d;color:#e6edf3;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
-    .hbtn:hover{background:#2d333b;border-color:#58a6ff}
+/* ── LAYOUT ───────────────────────────────────────── */
+#root { display: flex; flex-direction: column; height: 100vh; }
 
-    /* Alert banner */
-    #alert-banner{display:none;padding:10px 20px;font-size:13px;font-weight:500;align-items:center;gap:10px;flex-shrink:0;border-bottom:1px solid transparent;animation:slideDown .3s ease}
-    #alert-banner.show{display:flex}
-    #alert-banner.level-none{background:#1a2744;border-color:#1e4080;color:#58a6ff}
-    #alert-banner.level-low{background:#1a3a1a;border-color:#2d6a2d;color:#3fb950}
-    #alert-banner.level-moderate{background:#2a1a00;border-color:#8b5e00;color:#e3b341}
-    #alert-banner.level-high{background:#2a1000;border-color:#a03000;color:#ff7b4f}
-    #alert-banner.level-extreme{background:#2a0a0a;border-color:#8b1a1a;color:#ff6b6b;animation:pulse 2s infinite}
-    @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
-    .alert-icon{font-size:18px;flex-shrink:0}
-    .alert-text{flex:1}
-    .alert-title{font-weight:700;font-size:14px}
-    .alert-sub{font-size:12px;opacity:.85;margin-top:1px}
-    .alert-close{cursor:pointer;opacity:.6;font-size:16px;padding:0 4px}
-    .alert-close:hover{opacity:1}
+/* ── HEADER ───────────────────────────────────────── */
+header {
+  height: 52px; flex-shrink: 0;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px; padding: 0 16px;
+  z-index: 900;
+}
+.logo { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.logo-mark {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-mark svg { width: 16px; height: 16px; }
+.logo-name { font-size: 14px; font-weight: 600; letter-spacing: -.3px; }
+.logo-tag { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 2px; }
 
-    /* Alert panel (right side) */
-    #alert-panel{position:absolute;top:70px;right:20px;width:320px;background:#161b22;border:1px solid #30363d;border-radius:12px;z-index:2000;display:none;box-shadow:0 8px 32px rgba(0,0,0,.6);overflow:hidden}
-    #alert-panel.show{display:block}
-    .ap-header{padding:14px 16px;border-bottom:1px solid #21262d;display:flex;align-items:center;justify-content:space-between}
-    .ap-header h3{font-size:13px;font-weight:600}
-    .ap-close{cursor:pointer;color:#8b949e;font-size:18px;line-height:1}
-    .ap-close:hover{color:#e6edf3}
-    .ap-body{padding:12px 16px;max-height:480px;overflow-y:auto}
-    .alert-card{border-radius:8px;padding:12px 14px;margin-bottom:8px;border-left:3px solid transparent}
-    .alert-card.extreme{background:#1a0808;border-color:#b71c1c}
-    .alert-card.high{background:#1a0f00;border-color:#e65100}
-    .alert-card.medium{background:#1a1500;border-color:#ff9800}
-    .alert-card.low{background:#0d1a10;border-color:#1e90ff}
-    .alert-card .ac-title{font-size:12px;font-weight:700;margin-bottom:4px}
-    .alert-card.extreme .ac-title{color:#ff6b6b}
-    .alert-card.high .ac-title{color:#ff7b4f}
-    .alert-card.medium .ac-title{color:#ffb74d}
-    .alert-card.low .ac-title{color:#64b5f6}
-    .alert-card .ac-body{font-size:11px;color:#8b949e;line-height:1.6}
-    .alert-card .ac-stat{display:inline-block;background:#21262d;border-radius:4px;padding:2px 7px;font-size:10px;margin-top:5px;margin-right:4px;color:#e6edf3}
-    .no-alerts{text-align:center;padding:24px;color:#8b949e;font-size:13px}
+/* Search */
+.search-wrap { flex: 1; max-width: 440px; position: relative; }
+.search-wrap input {
+  width: 100%; height: 34px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text); font-family: var(--font);
+  font-size: 12px; padding: 0 32px 0 34px; outline: none;
+  transition: border-color .15s;
+}
+.search-wrap input:focus { border-color: var(--accent); }
+.search-wrap input::placeholder { color: var(--muted); }
+.s-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.s-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--muted); cursor: pointer; font-size: 12px; display: none; transition: color .1s; }
+.s-clear:hover { color: var(--text); }
+.s-drop {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--panel); border: 1px solid var(--border2);
+  border-radius: var(--r2); z-index: 9000; overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0,0,0,.6); display: none;
+}
+.s-drop.open { display: block; }
+.s-item {
+  padding: 9px 12px; cursor: pointer; display: flex; align-items: center;
+  gap: 9px; border-bottom: 1px solid var(--border); transition: background .1s;
+}
+.s-item:last-child { border-bottom: none; }
+.s-item:hover { background: #222226; }
+.s-item-name { font-weight: 500; font-size: 12px; }
+.s-item-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.s-item-risk {
+  margin-left: auto; flex-shrink: 0;
+  font-size: 9px; font-weight: 600; padding: 2px 7px;
+  border-radius: 4px; font-family: var(--mono);
+}
 
-    /* App layout */
-    .app{display:flex;flex:1;overflow:hidden;position:relative}
+.header-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.hbtn {
+  height: 32px; padding: 0 12px; border-radius: var(--r);
+  background: var(--panel); border: 1px solid var(--border);
+  color: var(--sub); font-family: var(--font); font-size: 11px;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  transition: all .15s; white-space: nowrap; font-weight: 500;
+}
+.hbtn:hover { border-color: var(--border2); color: var(--text); background: #222226; }
+.hbtn-primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+.hbtn-primary:hover { background: #7dd3fc; border-color: #7dd3fc; }
+.alert-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--extreme); margin-left: 2px; display: none;
+  animation: adot 1.5s ease-in-out infinite;
+}
+@keyframes adot { 0%,100%{opacity:1} 50%{opacity:.3} }
+.scenario-badge {
+  height: 22px; padding: 0 9px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; display: flex; align-items: center;
+  font-family: var(--mono); flex-shrink: 0;
+}
 
-    /* Sidebar */
-    .sidebar{width:290px;background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
-    .sidebar::-webkit-scrollbar{width:4px}
-    .sidebar::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
-    .sec{padding:13px 15px;border-bottom:1px solid #21262d}
-    .sec h3{font-size:11px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
+/* ── MAIN AREA ────────────────────────────────────── */
+.main { display: flex; flex: 1; overflow: hidden; position: relative; }
+#map { flex: 1; }
 
-    /* Scenario buttons */
-    .sbtn{width:100%;padding:9px 11px;margin-bottom:5px;border-radius:8px;border:1px solid #30363d;background:#21262d;color:#e6edf3;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;text-align:left}
-    .sbtn:hover{border-color:#58a6ff;background:#1a2332}
-    .sbtn.active{border-color:#58a6ff;background:#1a2d4a}
-    .sname{font-weight:500}
-    .srain{font-size:10px;color:#8b949e;margin-top:1px}
-    .sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* ── RIGHT PANEL ──────────────────────────────────── */
+#panel {
+  width: 340px; flex-shrink: 0;
+  background: var(--surface); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.panel-header {
+  padding: 14px 16px 12px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0;
+}
+.ph-left .ph-title { font-size: 13px; font-weight: 600; line-height: 1.3; }
+.ph-left .ph-coords { font-size: 10px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+.ph-close {
+  width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--border);
+  background: none; color: var(--muted); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all .15s;
+}
+.ph-close:hover { border-color: var(--border2); color: var(--text); }
+.panel-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+.panel-body::-webkit-scrollbar { width: 3px; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
-    /* Sliders */
-    .srow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-    .srow label{font-size:11px;color:#8b949e;width:80px;flex-shrink:0}
-    .srow input[type=range]{flex:1;accent-color:#58a6ff}
-    .srow .val{font-size:11px;font-weight:600;color:#58a6ff;width:44px;text-align:right;flex-shrink:0}
+/* ── EMPTY STATE ──────────────────────────────────── */
+#panel-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  padding: 32px; text-align: center;
+}
+.empty-icon { font-size: 36px; opacity: .4; }
+.empty-title { font-size: 13px; font-weight: 500; color: var(--sub); }
+.empty-sub { font-size: 11px; color: var(--muted); line-height: 1.6; }
+.empty-hint {
+  margin-top: 8px; padding: 8px 14px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r); font-size: 11px; color: var(--muted);
+}
 
-    /* Alert summary widget */
-    .alert-summary{background:#21262d;border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;border:1px solid #30363d;transition:all .15s}
-    .alert-summary:hover{border-color:#58a6ff}
-    .as-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-    .as-label{font-size:11px;color:#8b949e}
-    .as-level{font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px}
-    .as-level.none{background:#1a2744;color:#58a6ff}
-    .as-level.low{background:#1a3a1a;color:#3fb950}
-    .as-level.moderate{background:#2a1a00;color:#e3b341}
-    .as-level.high{background:#2a1000;color:#ff7b4f}
-    .as-level.extreme{background:#2a0a0a;color:#ff6b6b}
-    .as-counts{display:flex;gap:6px}
-    .as-count{flex:1;background:#161b22;border-radius:6px;padding:5px 4px;text-align:center}
-    .as-count .n{font-size:14px;font-weight:700}
-    .as-count .l{font-size:9px;color:#8b949e;margin-top:1px}
-    .as-bell{font-size:16px;margin-right:4px}
+/* ── RISK BADGE ───────────────────────────────────── */
+.risk-bar {
+  border-radius: var(--r); padding: 12px 14px; margin-bottom: 14px;
+  border: 1px solid; position: relative; overflow: hidden;
+}
+.risk-bar::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.risk-bar.none   { background: #111; border-color: #3f3f46; }
+.risk-bar.low    { background: #0c1a26; border-color: #0e4166; }
+.risk-bar.medium { background: #1c1200; border-color: #6b4200; }
+.risk-bar.high   { background: #1c0e00; border-color: #7a3500; }
+.risk-bar.extreme { background: #1c0808; border-color: #7a1a1a; }
+.risk-bar.none::before   { background: var(--none); }
+.risk-bar.low::before    { background: var(--low); }
+.risk-bar.medium::before { background: var(--medium); }
+.risk-bar.high::before   { background: var(--high); }
+.risk-bar.extreme::before{ background: var(--extreme); }
+.rb-level { font-size: 11px; font-weight: 600; font-family: var(--mono); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 4px; }
+.rb-desc { font-size: 11px; color: var(--sub); line-height: 1.6; }
 
-    /* Animation */
-    .anim-btn{width:100%;padding:8px;border-radius:8px;border:1px solid #30363d;background:#21262d;color:#e6edf3;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;margin-bottom:6px}
-    .anim-btn:hover{background:#2d333b;border-color:#58a6ff}
-    .anim-btn.playing{background:#1a3a1a;border-color:#3fb950;color:#3fb950}
-    .tbar{height:4px;background:#21262d;border-radius:2px;position:relative;margin:6px 0}
-    .tbar-fill{height:100%;background:linear-gradient(90deg,#1e90ff,#ff9800,#b71c1c);border-radius:2px;transition:width .8s ease;width:0%}
-    .tbar-marker{position:absolute;top:-4px;width:12px;height:12px;background:#58a6ff;border-radius:50%;border:2px solid #161b22;transform:translateX(-50%);transition:left .8s ease;left:0%}
-    .fi-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px}
-    .fi{background:#21262d;border-radius:6px;padding:5px 8px}
-    .fi-l{font-size:9px;color:#8b949e}
-    .fi-v{font-size:12px;font-weight:600;color:#58a6ff}
+/* ── KPI GRID ─────────────────────────────────────── */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+.kpi {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 10px 11px;
+}
+.kpi-label { font-size: 9px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+.kpi-value { font-size: 20px; font-weight: 600; font-family: var(--mono); line-height: 1; }
+.kpi-unit { font-size: 9px; color: var(--muted); margin-top: 2px; }
 
-    /* Layer toggles */
-    .ltoggle{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #21262d;cursor:pointer}
-    .ltoggle:last-child{border-bottom:none}
-    .ll{display:flex;align-items:center;gap:7px}
-    .ldot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
-    .lname{font-size:12px}
-    .sw{width:30px;height:17px;background:#30363d;border-radius:9px;position:relative;transition:background .2s;flex-shrink:0}
-    .sw.on{background:#238636}
-    .sw::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .2s}
-    .sw.on::after{transform:translateX(13px)}
+/* ── SECTION LABEL ────────────────────────────────── */
+.sec-label {
+  font-size: 9px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 8px; margin-top: 14px; display: flex; align-items: center; gap: 6px;
+}
+.sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.sec-label:first-child { margin-top: 0; }
 
-    /* Stats */
-    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-    .scard{background:#21262d;border:1px solid #30363d;border-radius:7px;padding:8px 10px}
-    .scard .sl{font-size:9px;color:#8b949e;margin-bottom:2px}
-    .scard .sv{font-size:16px;font-weight:700;color:#58a6ff}
-    .scard .su{font-size:9px;color:#8b949e}
+/* ── SCENARIOS ────────────────────────────────────── */
+.scenarios { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.sc-row {
+  display: flex; align-items: center; gap: 8px; padding: 9px 10px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r); position: relative; cursor: default;
+  transition: border-color .15s;
+}
+.sc-row:hover { border-color: var(--border2); }
+.sc-row:hover .sc-tooltip { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.sc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sc-name { font-size: 11px; font-weight: 500; width: 60px; flex-shrink: 0; }
+.sc-bar-bg { flex: 1; height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.sc-bar { height: 100%; border-radius: 3px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+.sc-depth { font-size: 12px; font-weight: 600; font-family: var(--mono); width: 38px; text-align: right; }
+.sc-risk-tag { font-size: 9px; font-family: var(--mono); width: 46px; text-align: right; }
+.sc-tooltip {
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%) translateY(4px);
+  background: #fafafa; color: #111; border-radius: var(--r);
+  padding: 8px 12px; font-size: 11px; line-height: 1.6; white-space: normal;
+  width: 240px; opacity: 0; pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 9999;
+  transition: opacity .15s, transform .15s;
+}
+.sc-tooltip::after {
+  content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: #fafafa;
+}
+.sc-tooltip-title { font-weight: 700; margin-bottom: 3px; font-size: 11px; }
 
-    /* Risk bars */
-    .rrow{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:11px}
-    .rlabel{width:46px;font-size:10px}
-    .rbg{flex:1;height:7px;background:#21262d;border-radius:3px;overflow:hidden}
-    .rfill{height:100%;border-radius:3px;transition:width .4s}
-    .rkm{width:38px;text-align:right;color:#8b949e;font-size:10px}
-    .chart-wrap{height:110px;position:relative;padding-top:4px}
+/* ── ML BLOCK ─────────────────────────────────────── */
+.ml-block {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 11px 12px; margin-bottom: 14px;
+}
+.ml-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.ml-title { font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+.ml-chip {
+  font-size: 9px; font-family: var(--mono); font-weight: 600;
+  padding: 2px 7px; border-radius: 4px; background: #1a1a2e;
+  border: 1px solid #333;
+}
+.ml-feat-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.ml-feat-label { font-size: 9px; color: var(--muted); width: 64px; flex-shrink: 0; font-family: var(--mono); }
+.ml-feat-bg { flex: 1; height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+.ml-feat-fill { height: 100%; border-radius: 2px; }
+.ml-feat-val { font-size: 9px; font-family: var(--mono); width: 36px; text-align: right; }
+.ml-prob-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); }
+.ml-prob-label { font-size: 9px; color: var(--muted); white-space: nowrap; }
+.ml-prob-bg { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.ml-prob-fill { height: 100%; border-radius: 3px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+.ml-prob-pct { font-size: 11px; font-weight: 600; font-family: var(--mono); width: 34px; text-align: right; }
 
-    /* Feature importance */
-    .frow{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:11px}
-    .fname{width:72px;color:#8b949e;font-size:10px}
-    .fbg{flex:1;height:5px;background:#21262d;border-radius:3px;overflow:hidden}
-    .ffill{height:100%;background:#7f77dd;border-radius:3px}
-    .fpct{width:32px;text-align:right;color:#8b949e;font-size:10px}
+/* ── ANIMATION ────────────────────────────────────── */
+.anim-block { margin-bottom: 14px; }
+.anim-controls { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.anim-play-btn {
+  width: 30px; height: 30px; border-radius: var(--r);
+  background: var(--panel); border: 1px solid var(--border);
+  color: var(--sub); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; transition: all .15s;
+}
+.anim-play-btn:hover { border-color: var(--border2); color: var(--text); }
+.anim-play-btn.playing { background: var(--green); border-color: var(--green); color: #000; }
+.anim-frames { display: flex; gap: 2px; flex: 1; }
+.anim-frame {
+  flex: 1; height: 5px; border-radius: 2px;
+  background: var(--border); cursor: pointer; transition: background .2s;
+}
+.anim-frame.active { background: var(--accent) !important; }
+.anim-frame.wet { background: #0e4166; }
+.anim-speed { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+.anim-stat-row { display: flex; gap: 4px; }
+.anim-stat {
+  flex: 1; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 7px; text-align: center;
+}
+.anim-stat-l { font-size: 8px; color: var(--muted); }
+.anim-stat-v { font-size: 11px; font-weight: 600; font-family: var(--mono); color: var(--accent); }
 
-    /* Map */
-    #map{flex:1;height:100%}
+/* ── CHART ────────────────────────────────────────── */
+.chart-block { margin-bottom: 14px; position: relative; }
+.chart-container {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 10px; height: 120px; position: relative;
+  transition: height .3s cubic-bezier(.4,0,.2,1);
+  cursor: pointer;
+}
+.chart-container:hover { height: 180px; border-color: var(--border2); }
+.chart-container:hover .chart-expand-hint { opacity: 0; }
+.chart-expand-hint {
+  position: absolute; bottom: 6px; right: 8px;
+  font-size: 9px; color: var(--muted); transition: opacity .2s;
+  pointer-events: none;
+}
+.chart-container canvas { width: 100% !important; height: 100% !important; }
 
-    /* Legend */
-    .map-legend{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:9px 12px;font-size:11px;min-width:120px}
-    .map-legend h4{font-size:10px;color:#8b949e;margin-bottom:6px;font-weight:600}
-    .leg-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
-    .leg-sw{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+/* ── ACTION ───────────────────────────────────────── */
+.action-block {
+  border-radius: var(--r); padding: 11px 12px; margin-bottom: 14px;
+  border: 1px solid;
+}
+.action-block.none   { background: #111; border-color: var(--border); }
+.action-block.low    { background: #0c1a26; border-color: #0e4166; }
+.action-block.medium { background: #1c1200; border-color: #6b4200; }
+.action-block.high   { background: #1c0e00; border-color: #7a3500; }
+.action-block.extreme{ background: #1c0808; border-color: #7a1a1a; }
+.action-title { font-size: 11px; font-weight: 600; margin-bottom: 7px; }
+.action-step { display: flex; gap: 7px; margin-bottom: 5px; align-items: flex-start; font-size: 11px; color: var(--sub); line-height: 1.55; }
+.action-num {
+  width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+  font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
 
-    /* Popup */
-    .leaflet-popup-content-wrapper{background:#161b22!important;border:1px solid #30363d!important;border-radius:10px!important;color:#e6edf3!important;box-shadow:0 8px 24px rgba(0,0,0,.5)!important;min-width:200px}
-    .leaflet-popup-tip{background:#161b22!important}
-    .pu-title{font-size:12px;font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:6px}
-    .pu-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
-    .pu-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid #21262d}
-    .pu-row:last-child{border-bottom:none}
-    .pu-row .key{color:#8b949e}
-    .pu-alert{margin-top:8px;padding:7px 9px;border-radius:6px;font-size:11px;line-height:1.5}
-    .pu-alert.extreme{background:#1a0808;color:#ff6b6b;border-left:3px solid #b71c1c}
-    .pu-alert.high{background:#1a0f00;color:#ff7b4f;border-left:3px solid #e65100}
-    .pu-alert.medium{background:#1a1500;color:#ffb74d;border-left:3px solid #ff9800}
-    .pu-alert.low{background:#0d1a10;color:#64b5f6;border-left:3px solid #1e90ff}
-    .depth-chart-wrap{height:70px;position:relative;margin-top:4px}
-    .srow input[type=range]{accent-color:#58a6ff}
-  </style>
+.report-btn {
+  width: 100%; height: 36px; border-radius: var(--r);
+  background: var(--accent); border: none; color: #000;
+  font-family: var(--font); font-size: 12px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  gap: 6px; transition: background .15s; margin-bottom: 2px;
+}
+.report-btn:hover { background: #7dd3fc; }
+
+/* ── CUSTOM INPUT FORM ────────────────────────────── */
+.custom-form {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden; margin-bottom: 14px;
+}
+.custom-form-header {
+  padding: 9px 12px; border-bottom: 1px solid var(--border);
+  font-size: 10px; font-weight: 600; color: var(--sub);
+  text-transform: uppercase; letter-spacing: .07em;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.custom-form-body { padding: 11px 12px; display: flex; flex-direction: column; gap: 8px; }
+.field-row { display: flex; flex-direction: column; gap: 3px; }
+.field-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+.field-desc { font-size: 9px; color: var(--border2); font-style: italic; margin-bottom: 1px; }
+.field-input-wrap { display: flex; align-items: center; gap: 6px; }
+.field-input {
+  flex: 1; height: 32px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: var(--mono); font-size: 12px;
+  padding: 0 10px; outline: none; transition: border-color .15s;
+}
+.field-input:focus { border-color: var(--accent); }
+.field-unit { font-size: 10px; color: var(--muted); font-family: var(--mono); width: 28px; flex-shrink: 0; }
+.field-range {
+  -webkit-appearance: none; width: 100%; height: 3px;
+  background: var(--border); border-radius: 2px; outline: none;
+  accent-color: var(--accent);
+}
+.custom-run-btn {
+  width: 100%; height: 32px; background: var(--panel);
+  border: 1px solid var(--border2); border-radius: 6px;
+  color: var(--text); font-family: var(--font); font-size: 11px;
+  font-weight: 600; cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.custom-run-btn:hover { background: #222226; border-color: var(--accent); color: var(--accent); }
+.custom-result {
+  margin-top: 8px; padding: 8px 10px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 10px; line-height: 1.6; display: none;
+}
+.custom-result.show { display: block; }
+
+/* ── ALERTS PANEL ─────────────────────────────────── */
+#alerts-panel {
+  position: absolute; top: 10px; right: 360px;
+  width: 280px; background: var(--panel);
+  border: 1px solid var(--border2); border-radius: var(--r2);
+  z-index: 4000; display: none; overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0,0,0,.5);
+}
+#alerts-panel.open { display: block; }
+.ap-header { padding: 11px 13px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.ap-title { font-size: 12px; font-weight: 600; }
+.ap-close { cursor: pointer; color: var(--muted); font-size: 15px; transition: color .1s; }
+.ap-close:hover { color: var(--text); }
+.ap-body { padding: 10px 12px; max-height: 360px; overflow-y: auto; }
+.ap-card { border-radius: 7px; padding: 9px 10px; margin-bottom: 6px; border-left: 3px solid; }
+.ap-card.extreme { background: #1a0808; border-color: var(--extreme); }
+.ap-card.high    { background: #1a0f00; border-color: var(--high); }
+.ap-card.medium  { background: #1a1500; border-color: var(--medium); }
+.ap-card.low     { background: #081a22; border-color: var(--low); }
+.ap-card-title { font-size: 11px; font-weight: 600; margin-bottom: 3px; }
+.ap-card.extreme .ap-card-title { color: var(--extreme); }
+.ap-card.high    .ap-card-title { color: var(--high); }
+.ap-card.medium  .ap-card-title { color: var(--medium); }
+.ap-card.low     .ap-card-title { color: var(--low); }
+.ap-card-body { font-size: 10px; color: var(--muted); line-height: 1.5; }
+.ap-tag { display: inline-block; background: var(--panel); border-radius: 3px; padding: 1px 5px; font-size: 9px; margin-top: 4px; margin-right: 3px; color: var(--sub); font-family: var(--mono); }
+
+/* ── MAP LEGEND ───────────────────────────────────── */
+.map-legend {
+  background: rgba(9,9,11,.85); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 8px 10px; backdrop-filter: blur(8px);
+  font-size: 10px;
+}
+.leg-title { font-size: 9px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+.leg-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+/* ── SCENARIO HEADER BAR ──────────────────────────── */
+.scenario-header {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 38px; background: rgba(9,9,11,.8);
+  border-bottom: 1px solid var(--border); backdrop-filter: blur(8px);
+  display: flex; align-items: center; padding: 0 14px; gap: 12px;
+  z-index: 500; font-size: 11px; color: var(--muted);
+}
+.sh-label { font-weight: 600; color: var(--text); font-family: var(--mono); font-size: 12px; }
+.sh-sep { color: var(--border2); }
+.sh-stat { display: flex; align-items: center; gap: 4px; }
+.sh-stat-val { font-family: var(--mono); font-weight: 600; color: var(--text); }
+
+/* ── MARKER ───────────────────────────────────────── */
+.pin-pulse {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--accent); border: 2px solid #fff;
+  box-shadow: 0 0 0 0 rgba(56,189,248,.6);
+  animation: pin-anim 2s infinite;
+}
+@keyframes pin-anim { 0%{box-shadow:0 0 0 0 rgba(56,189,248,.6)} 70%{box-shadow:0 0 0 8px rgba(56,189,248,0)} 100%{box-shadow:0 0 0 0 rgba(56,189,248,0)} }
+
+/* ── TOOLTIP (scenario hover) ─────────────────────── */
+.leaflet-popup-content-wrapper {
+  background: var(--panel) !important; border: 1px solid var(--border2) !important;
+  border-radius: var(--r2) !important; color: var(--text) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.6) !important;
+}
+.leaflet-popup-tip { background: var(--panel) !important; }
+.pu-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.pu-row:last-child { border-bottom: none; }
+.pu-row .k { color: var(--muted); }
+
+/* ── OUTSIDE ZONE MSG ─────────────────────────────── */
+.outside-msg {
+  padding: 24px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.outside-msg .om-icon { font-size: 32px; opacity: .4; }
+.outside-msg .om-title { font-size: 13px; font-weight: 600; color: var(--sub); }
+.outside-msg .om-sub { font-size: 11px; color: var(--muted); line-height: 1.6; }
+.outside-msg code { font-family: var(--mono); font-size: 10px; color: var(--accent); background: var(--panel); padding: 2px 6px; border-radius: 4px; }
+
+/* Hide scrollbar for Firefox */
+.panel-body { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+</style>
 </head>
 <body>
+<div id="root">
 
-<!-- Header -->
+<!-- HEADER -->
 <header>
-  <div class="htitle">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2">
-      <path d="M3 18c0-3 2-5 5-5s4 2 5 2 3-2 5-2v5H3z"/>
-      <path d="M3 12c0-3 2-5 5-5s4 2 5 2 3-2 5-2"/>
-    </svg>
-    <div>
-      <h1>Flood Risk Analysis — Tunisia</h1>
-      <span>Real-time scenario modelling · SCS + Bathtub + Random Forest ML</span>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M3 18c0-3 2-5 5-5s4 2 5 2 3-2 5-2v5H3z"/><path d="M3 11c0-3 2-5 5-5s4 2 5 2 3-2 5-2"/></svg>
     </div>
+    <span class="logo-name">FloodSense<span class="logo-tag">Tunisia</span></span>
   </div>
-  <div class="header-actions">
-    <button class="hbtn" onclick="toggleAlertPanel()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-      <span id="alert-btn-label">Alerts</span>
-      <span id="alert-count-badge" style="display:none;background:#b71c1c;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700"></span>
+
+  <div class="search-wrap" id="sw">
+    <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input id="si" type="text" placeholder="Search location in Tunisia…" autocomplete="off"/>
+    <span class="s-clear" id="sx" onclick="clearSearch()">✕</span>
+    <div class="s-drop" id="sd"></div>
+  </div>
+
+  <div class="header-right">
+    <div id="scenario-badge" class="scenario-badge" style="background:#2a0a0a;color:#ef4444;border:1px solid #5a1818">EXTREME · 176mm</div>
+    <button class="hbtn" id="alerts-btn" onclick="toggleAlerts()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Alerts
+      <span class="alert-dot" id="adot"></span>
     </button>
-    <button class="hbtn" onclick="exportReport()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-      Export report
+    <button class="hbtn hbtn-primary" onclick="exportReport()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Export Report
     </button>
   </div>
 </header>
 
-<!-- Alert banner -->
-<div id="alert-banner">
-  <span class="alert-icon" id="alert-icon">⚠️</span>
-  <div class="alert-text">
-    <div class="alert-title" id="alert-title">—</div>
-    <div class="alert-sub" id="alert-sub">—</div>
+<div class="main">
+  <div style="position:relative;flex:1;display:flex;flex-direction:column">
+    <!-- SCENARIO STATUS BAR -->
+    <div class="scenario-header" id="sc-bar">
+      <span class="sh-label" id="sh-name">EXTREME</span>
+      <span class="sh-sep">·</span>
+      <span class="sh-stat"><span class="sh-stat-val" id="sh-rain">176</span><span>&nbsp;mm rainfall</span></span>
+      <span class="sh-sep">·</span>
+      <span class="sh-stat"><span class="sh-stat-val" id="sh-sea">+1.2</span><span>&nbsp;m sea rise</span></span>
+      <span class="sh-sep">·</span>
+      <span class="sh-stat"><span class="sh-stat-val" id="sh-area">—</span><span>&nbsp;km² flooded</span></span>
+      <span class="sh-sep">·</span>
+      <span class="sh-stat">Max <span class="sh-stat-val" id="sh-depth">—</span><span>&nbsp;m</span></span>
+    </div>
+    <div id="map" style="flex:1;margin-top:38px"></div>
   </div>
-  <span class="alert-close" onclick="dismissBanner()">✕</span>
-</div>
 
-<!-- Alert panel -->
-<div id="alert-panel">
-  <div class="ap-header">
-    <h3>Active flood alerts</h3>
-    <span class="ap-close" onclick="toggleAlertPanel()">✕</span>
-  </div>
-  <div class="ap-body" id="ap-body"></div>
-</div>
-
-<div class="app">
-  <div class="sidebar">
-
-    <!-- Scenario -->
-    <div class="sec">
-      <h3>Rainfall scenario</h3>
-      <button class="sbtn" id="btn-normal" onclick="setScenario('normal')">
-        <div><div class="sname">Normal conditions</div><div class="srain">2.0 mm · No risk</div></div>
-        <div class="sdot" style="background:#3fb950"></div>
-      </button>
-      <button class="sbtn" id="btn-moderate" onclick="setScenario('moderate')">
-        <div><div class="sname">Moderate storm</div><div class="srain">55.5 mm · ~10-year event</div></div>
-        <div class="sdot" style="background:#f78166"></div>
-      </button>
-      <button class="sbtn active" id="btn-extreme" onclick="setScenario('extreme')">
-        <div><div class="sname">Extreme event</div><div class="srain">176.0 mm · ~100-year event</div></div>
-        <div class="sdot" style="background:#b71c1c"></div>
-      </button>
+  <!-- RIGHT PANEL -->
+  <div id="panel">
+    <div id="panel-empty">
+      <div class="empty-icon">📍</div>
+      <div class="empty-title">No location selected</div>
+      <div class="empty-sub">Click anywhere on the map or search a city to see the ML prediction, flood simulation and risk analysis for that exact location.</div>
+      <div class="empty-hint">Try: <strong>Tunis</strong> · <strong>Nabeul</strong> · <strong>Bizerte</strong> · or click the coastal area</div>
     </div>
 
-    <!-- Custom sliders -->
-    <div class="sec">
-      <h3>Custom simulation</h3>
-      <div class="srow">
-        <label>Rainfall</label>
-        <input type="range" id="rain-sl" min="0" max="200" value="176" oninput="onRain(this.value)">
-        <span class="val" id="rain-v">176 mm</span>
-      </div>
-      <div class="srow">
-        <label>Sea rise</label>
-        <input type="range" id="sea-sl" min="0" max="200" step="1" value="120" oninput="onSea(this.value)">
-        <span class="val" id="sea-v">1.2 m</span>
-      </div>
-    </div>
-
-    <!-- Alert summary -->
-    <div class="sec">
-      <h3>Risk alert status</h3>
-      <div class="alert-summary" onclick="toggleAlertPanel()">
-        <div class="as-row">
-          <span class="as-label"><span class="as-bell">🔔</span> Current alert level</span>
-          <span class="as-level" id="as-level">—</span>
+    <div id="panel-content" style="display:none;flex-direction:column;height:100%">
+      <div class="panel-header">
+        <div class="ph-left">
+          <div class="ph-title" id="ph-title">—</div>
+          <div class="ph-coords" id="ph-coords">—</div>
         </div>
-        <div class="as-counts" id="as-counts"></div>
+        <button class="ph-close" onclick="closePanel()">✕</button>
       </div>
+      <div class="panel-body" id="panel-body"></div>
     </div>
-
-    <!-- Animation -->
-    <div class="sec">
-      <h3>Flood propagation</h3>
-      <button class="anim-btn" id="play-btn" onclick="togglePlay()">
-        <svg id="play-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-        <span id="play-label">Play 12-hour simulation</span>
-      </button>
-      <div class="srow" style="margin-bottom:0">
-        <label>Speed</label>
-        <input type="range" id="speed-sl" min="300" max="1500" step="100" value="800" oninput="onSpeed(this.value)">
-        <span class="val" id="speed-v">0.8s</span>
-      </div>
-      <div class="tbar"><div class="tbar-fill" id="tbar-fill"></div><div class="tbar-marker" id="tbar-marker"></div></div>
-      <div class="fi-grid" id="frame-info">
-        <div class="fi"><div class="fi-l">Hour</div><div class="fi-v" id="fi-hour">—</div></div>
-        <div class="fi"><div class="fi-l">Phase</div><div class="fi-v" id="fi-phase">Press play</div></div>
-        <div class="fi"><div class="fi-l">Sea level</div><div class="fi-v" id="fi-sea">—</div></div>
-        <div class="fi"><div class="fi-l">Flooded</div><div class="fi-v" id="fi-flooded">—</div></div>
-      </div>
-      <div class="depth-chart-wrap" style="margin-top:8px"><canvas id="depth-chart"></canvas></div>
-    </div>
-
-    <!-- Layers -->
-    <div class="sec">
-      <h3>Map layers</h3>
-      <div class="ltoggle" onclick="toggleLayer('flood')">
-        <div class="ll"><div class="ldot" style="background:#1e90ff"></div><span class="lname">Flood zones (physics)</span></div>
-        <div class="sw on" id="sw-flood"></div>
-      </div>
-      <div class="ltoggle" onclick="toggleLayer('ml')">
-        <div class="ll"><div class="ldot" style="background:#7f77dd"></div><span class="lname">ML risk prediction</span></div>
-        <div class="sw on" id="sw-ml"></div>
-      </div>
-      <div class="ltoggle" onclick="toggleLayer('anim')">
-        <div class="ll"><div class="ldot" style="background:#3fb950"></div><span class="lname">Animation layer</span></div>
-        <div class="sw" id="sw-anim"></div>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="sec">
-      <h3>Scenario statistics</h3>
-      <div class="stat-grid">
-        <div class="scard"><div class="sl">Flooded area</div><div class="sv" id="s-area">—</div><div class="su">km²</div></div>
-        <div class="scard"><div class="sl">% of region</div><div class="sv" id="s-pct">—</div><div class="su">percent</div></div>
-        <div class="scard"><div class="sl">Max depth</div><div class="sv" id="s-maxd">—</div><div class="su">metres</div></div>
-        <div class="scard"><div class="sl">Mean depth</div><div class="sv" id="s-meand">—</div><div class="su">metres</div></div>
-      </div>
-    </div>
-
-    <!-- Risk breakdown -->
-    <div class="sec">
-      <h3>Risk zone breakdown</h3>
-      <div id="risk-bars"></div>
-      <div class="chart-wrap"><canvas id="risk-chart"></canvas></div>
-    </div>
-
-    <!-- Feature importance -->
-    <div class="sec">
-      <h3>ML — feature importance</h3>
-      <div id="feat-imp"></div>
-    </div>
-
   </div>
-  <div id="map"></div>
+</div>
+
+<!-- ALERTS PANEL -->
+<div id="alerts-panel">
+  <div class="ap-header"><span class="ap-title">Active Flood Alerts</span><span class="ap-close" onclick="toggleAlerts()">✕</span></div>
+  <div class="ap-body" id="ap-body"></div>
 </div>
 
 <script src="data.js"></script>
 <script src="animation_data.js"></script>
+<script src="grid_data.js"></script>
+<script src="model_data.js"></script>
 <script>
-const RC={none:'#1a1a2e',low:'#1e90ff',medium:'#ff9800',high:'#e65100',extreme:'#b71c1c'};
-const RL={none:'None',low:'Low',medium:'Medium',high:'High',extreme:'Extreme'};
-const PIXEL_KM2=0.049;
-
-// Alert definitions per risk level
-const ALERT_DEFS={
-  none:{level:'none',icon:'✅',title:'No flood risk',sub:'Current conditions are normal. No immediate action required.',color:'#58a6ff'},
-  low:{level:'low',icon:'ℹ️',title:'Low flood risk — Watch',sub:'Minor flooding possible in low-lying coastal areas. Stay informed.',color:'#3fb950'},
-  moderate:{level:'moderate',icon:'⚠️',title:'Moderate flood risk — Advisory',sub:'Significant flooding expected. Avoid coastal roads. Prepare emergency kit.',color:'#e3b341'},
-  high:{level:'high',icon:'🚨',title:'High flood risk — Warning',sub:'Dangerous flooding imminent. Evacuate low-lying areas immediately.',color:'#ff7b4f'},
-  extreme:{level:'extreme',icon:'🆘',title:'EXTREME FLOOD RISK — Emergency',sub:'Life-threatening flooding. Emergency services activated. Move to high ground NOW.',color:'#ff6b6b'},
+// ── CONSTANTS ──────────────────────────────────────
+const RC = { none:'#52525b', low:'#0ea5e9', medium:'#f59e0b', high:'#f97316', extreme:'#ef4444' };
+const RL = { none:'No Risk', low:'Low', medium:'Medium', high:'High', extreme:'Extreme' };
+const PIXEL_KM2 = 0.049;
+const SCENARIOS_DEF = {
+  normal:   { rain:2,   sea:0.0, label:'Normal',   rp:'< 2 years',   color:'#22c55e' },
+  moderate: { rain:55.5,sea:0.3, label:'Moderate',  rp:'~10 years',   color:'#f59e0b' },
+  extreme:  { rain:176, sea:1.2, label:'Extreme',   rp:'~100 years',  color:'#ef4444' },
 };
+const SCENARIO_TOOLTIPS = {
+  normal: {
+    title: 'Normal conditions',
+    desc: 'Represents a typical day or mild rain event. Rainfall of 2mm over the study period. Return period: less than once every 2 years. Expected outcome: no flood risk across the region.',
+  },
+  moderate: {
+    title: 'Moderate storm (10-year event)',
+    desc: 'A significant 3-day storm with 55.5mm of cumulative rainfall and +0.3m sea level rise from storm surge. Statistically expected to occur approximately once per decade. Causes localised flooding in low-lying coastal zones.',
+  },
+  extreme: {
+    title: 'Extreme event (100-year flood)',
+    desc: 'Catastrophic multi-day event: 176mm rainfall and +1.2m sea level rise. Expected once every 100 years on average — but climate change is increasing the frequency of such events. Triggers life-threatening flooding across 24.6% of the study region.',
+  },
+};
+const CITIES = [
+  {name:'Tunis',lat:36.8065,lon:10.1815,r:'Tunis'},
+  {name:'Ariana',lat:36.8625,lon:10.1956,r:'Ariana'},
+  {name:'Ben Arous',lat:36.7531,lon:10.2281,r:'Ben Arous'},
+  {name:'La Marsa',lat:36.8781,lon:10.3247,r:'Tunis'},
+  {name:'Carthage',lat:36.8525,lon:10.3233,r:'Tunis'},
+  {name:'Sidi Bou Said',lat:36.8696,lon:10.3417,r:'Tunis'},
+  {name:'La Goulette',lat:36.8181,lon:10.3053,r:'Tunis'},
+  {name:'Manouba',lat:36.8094,lon:10.0983,r:'Manouba'},
+  {name:'Bizerte',lat:37.2746,lon:9.8739,r:'Bizerte'},
+  {name:'Nabeul',lat:36.4561,lon:10.7376,r:'Nabeul'},
+  {name:'Hammamet',lat:36.3998,lon:10.6178,r:'Nabeul'},
+  {name:'Kelibia',lat:36.85,lon:11.1,r:'Nabeul'},
+  {name:'Korba',lat:36.5731,lon:10.8686,r:'Nabeul'},
+  {name:'Zaghouan',lat:36.4029,lon:10.1429,r:'Zaghouan'},
+  {name:'Sousse',lat:35.8256,lon:10.6369,r:'Sousse'},
+  {name:'Monastir',lat:35.7643,lon:10.8113,r:'Monastir'},
+  {name:'Mahdia',lat:35.5047,lon:11.0622,r:'Mahdia'},
+  {name:'Kairouan',lat:35.6712,lon:10.1004,r:'Kairouan'},
+  {name:'Sfax',lat:34.7406,lon:10.7603,r:'Sfax'},
+  {name:'Gabès',lat:33.8815,lon:10.0982,r:'Gabès'},
+  {name:'Médenine',lat:33.3547,lon:10.4956,r:'Médenine'},
+  {name:'Djerba',lat:33.8076,lon:10.8451,r:'Médenine'},
+  {name:'Tataouine',lat:32.9211,lon:10.4508,r:'Tataouine'},
+  {name:'Gafsa',lat:34.425,lon:8.7842,r:'Gafsa'},
+  {name:'Kasserine',lat:35.1676,lon:8.8365,r:'Kasserine'},
+  {name:'Sidi Bouzid',lat:35.0381,lon:9.4858,r:'Sidi Bouzid'},
+  {name:'Béja',lat:36.7256,lon:9.1817,r:'Béja'},
+  {name:'Jendouba',lat:36.5011,lon:8.7803,r:'Jendouba'},
+  {name:'Le Kef',lat:36.1822,lon:8.7147,r:'Le Kef'},
+  {name:'Tabarka',lat:36.9547,lon:8.7586,r:'Jendouba'},
+  {name:'Tozeur',lat:33.9197,lon:8.1335,r:'Tozeur'},
+  {name:'Kebili',lat:33.7042,lon:8.9715,r:'Kébili'},
+  {name:'Gulf of Tunis',lat:37.0,lon:10.3,r:'Coastal'},
+];
 
-// Zone-specific alert messages
-function zoneAlertMsg(risk, depth, elev){
-  const msgs={
-    extreme:`DANGER: ${depth}m of water expected. Immediately evacuate. Do not attempt to drive through flood water.`,
-    high:`WARNING: ${depth}m flooding forecast. Evacuate ground floors. Move valuables above flood level.`,
-    medium:`ADVISORY: ${depth}m flooding possible. Avoid this area. Monitor official emergency services.`,
-    low:`WATCH: Minor flooding (${depth}m) possible. Avoid walking near drainage channels.`,
+// ── GRID UTILITIES ─────────────────────────────────
+function inBounds(lat,lon){
+  const b=GRID_DATA.bounds;
+  return lat>=b.lat_min&&lat<=b.lat_max&&lon>=b.lon_min&&lon<=b.lon_max;
+}
+function latLonToRC(lat,lon){
+  const b=GRID_DATA.bounds,R=GRID_DATA.rows,C=GRID_DATA.cols;
+  const r=Math.floor((b.lat_max-lat)/(b.lat_max-b.lat_min)*R);
+  const c=Math.floor((lon-b.lon_min)/(b.lon_max-b.lon_min)*C);
+  return{r:Math.max(0,Math.min(R-1,r)),c:Math.max(0,Math.min(C-1,c))};
+}
+function depthToRisk(d){
+  if(d>1.5)return'extreme';if(d>0.75)return'high';if(d>0.25)return'medium';if(d>0.05)return'low';return'none';
+}
+
+// ── ML PREDICTION (client-side) ─────────────────────
+function predictML(elev, slope, twi, coast_dist, relief, curvature){
+  const cs=MODEL_DATA.class_stats;
+  const fi=MODEL_DATA.feature_importances;
+  const pairs=[
+    ['elevation',elev,'elev_mean','elev_std'],
+    ['slope',slope,'slope_mean','slope_std'],
+    ['twi',twi,'twi_mean','twi_std'],
+    ['coast_dist',coast_dist,'coast_mean','coast_std'],
+    ['relief',relief,'relief_mean','relief_std'],
+    ['curvature',curvature,'curv_mean','curv_std'],
+  ];
+  const scores={};
+  for(let cls=0;cls<=4;cls++){
+    const cst=cs[cls];
+    if(!cst){scores[cls]=-1e9;continue;}
+    let score=Math.log(cst.count/90000);
+    pairs.forEach(([fname,val,mk,sk])=>{
+      const w=fi[fname]||0.1;
+      const sigma=Math.max(cst[sk],0.001);
+      const z=(val-cst[mk])/sigma;
+      score+=w*(-0.5*z*z-Math.log(sigma));
+    });
+    scores[cls]=score;
+  }
+  const maxS=Math.max(...Object.values(scores));
+  let sumE=0;
+  const exps={};
+  for(let c=0;c<=4;c++){exps[c]=Math.exp(scores[c]-maxS);sumE+=exps[c];}
+  const probs={};
+  for(let c=0;c<=4;c++) probs[c]=exps[c]/sumE;
+  let pred=0,best=-Infinity;
+  for(let c=0;c<=4;c++) if(scores[c]>best){best=scores[c];pred=c;}
+  const names=['none','low','medium','high','extreme'];
+  return{cls:pred,name:names[pred],probs,highProb:probs[3]+probs[4]};
+}
+
+// Full location analysis
+function analyzeLocation(lat,lon,customRain=null,customSea=null){
+  if(!inBounds(lat,lon)) return null;
+  const{r,c}=latLonToRC(lat,lon);
+  const elev=GRID_DATA.dem[r][c];
+  const slope=GRID_DATA.slope[r][c];
+  const twi=GRID_DATA.twi[r][c];
+  const coast=GRID_DATA.coast_dist[r][c];
+  const relief=GRID_DATA.relief[r][c];
+  const curv=GRID_DATA.curvature[r][c];
+  const fn=GRID_DATA.flood_normal[r][c];
+  const fm=GRID_DATA.flood_moderate[r][c];
+  const fe=GRID_DATA.flood_extreme[r][c];
+
+  // Custom scenario interpolation
+  let customDepth=null;
+  if(customRain!==null){
+    const t=Math.min(1,Math.max(0,(customRain-2)/(176-2)));
+    const seaT=Math.min(1,Math.max(0,(customSea-0)/(1.2-0)));
+    customDepth=fn*(1-t)+fe*t+(fe*seaT*0.3);
+  }
+
+  const ml=predictML(elev,slope,twi,coast,relief,curv);
+
+  return{
+    lat,lon,elev,slope,twi,relief,curv,
+    fn,fm,fe,customDepth,
+    ml,
+    scenarios:{
+      normal:{d:fn,risk:depthToRisk(fn)},
+      moderate:{d:fm,risk:depthToRisk(fm)},
+      extreme:{d:fe,risk:depthToRisk(fe)},
+    },
+    worst:depthToRisk(fe),
   };
-  return msgs[risk]||'No flood risk in this area.';
 }
 
-// Compute overall alert level from scenario
-function computeAlertLevel(scenario){
-  const s=ANALYSIS.scenarios[scenario];
-  if(!s) return 'none';
-  const rc=s.risk_counts||{};
-  if((rc.extreme||0)>0) return 'extreme';
-  if((rc.high||0)>500) return 'high';
-  if((rc.medium||0)>500) return 'moderate';
-  if((rc.low||0)>0) return 'low';
-  return 'none';
-}
-
-// ── MAP SETUP ────────────────────────────────────────
-const map=L.map('map',{center:[36.9,10.3],zoom:10});
+// ── MAP ────────────────────────────────────────────
+const map=L.map('map',{center:[36.9,10.3],zoom:10,zoomControl:false});
+L.control.zoom({position:'bottomleft'}).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
 
-const SCENARIOS={
-  normal:{geojson:FLOOD_DATA,stats:ANALYSIS.scenarios.normal},
-  moderate:{geojson:FLOOD_MODERATE,stats:ANALYSIS.scenarios.moderate},
-  extreme:{geojson:FLOOD_EXTREME,stats:ANALYSIS.scenarios.extreme},
-};
+let floodLayer=null,mlLayer=null,animLayer=null,locMarker=null;
+const lv={flood:true,ml:true,anim:false};
 
-let floodLayer=null,mlLayer=null,animLayer=null;
-const layerVis={flood:true,ml:true,anim:false};
-
-function floodStyle(f){
-  const r=f.properties.risk_level||'none',d=f.properties.depth_m||0,c=RC[r];
-  return{fillColor:c,fillOpacity:r==='none'?0:Math.min(.3+d*.15,.85),color:c,weight:.3,opacity:.6};
-}
-function mlStyle(f){
-  const r=f.properties.risk_level||'none',p=f.properties.high_risk_probability||0,c=RC[r];
-  return{fillColor:c,fillOpacity:r==='none'?0:Math.min(.2+p*.6,.75),color:'#7f77dd',weight:.2,opacity:.4};
-}
-function animStyle(f){
-  const r=f.properties.risk_level||'none',d=f.properties.depth_m||0,c=RC[r];
-  return{fillColor:c,fillOpacity:r==='none'?0:Math.min(.35+d*.12,.9),color:c,weight:.2,opacity:.5};
-}
-
-function makePopup(f){
-  const p=f.properties,r=p.risk_level||'none',c=RC[r];
-  const ad=ALERT_DEFS[r]||ALERT_DEFS.none;
-  return `<div class="pu-title">
-    <span class="pu-badge" style="background:${c}22;color:${c};border:1px solid ${c}44">${RL[r]} risk</span>
-    Flood zone
-  </div>
-  <div class="pu-row"><span class="key">Flood depth</span><span>${(p.depth_m||0).toFixed(2)} m</span></div>
-  <div class="pu-row"><span class="key">Elevation</span><span>${(p.elevation_m||0).toFixed(1)} m asl</span></div>
-  <div class="pu-row"><span class="key">Risk score</span><span>${p.risk_score||0} / 4</span></div>
-  ${r!=='none'?`<div class="pu-alert ${r}">${ad.icon} ${zoneAlertMsg(r,(p.depth_m||0).toFixed(2),p.elevation_m||0)}</div>`:''}`;
-}
-
-function makeMlPopup(f){
-  const p=f.properties,r=p.risk_level||'none',c=RC[r];
-  const ad=ALERT_DEFS[r]||ALERT_DEFS.none;
-  return `<div class="pu-title">
-    <span class="pu-badge" style="background:${c}22;color:${c};border:1px solid ${c}44">${RL[r]} risk</span>
-    ML prediction
-  </div>
-  <div class="pu-row"><span class="key">High-risk probability</span><span>${((p.high_risk_probability||0)*100).toFixed(1)}%</span></div>
-  <div class="pu-row"><span class="key">Elevation</span><span>${(p.elevation_m||0).toFixed(1)} m asl</span></div>
-  ${r!=='none'?`<div class="pu-alert ${r}">${ad.icon} ${zoneAlertMsg(r,'varies',p.elevation_m||0)}</div>`:''}`;
-}
+const fStyle=f=>{const r=f.properties.risk_level||'none',d=f.properties.depth_m||0,c=RC[r];return{fillColor:c,fillOpacity:r==='none'?0:Math.min(.25+d*.12,.8),color:c,weight:.25,opacity:.5}};
+const mStyle=f=>{const r=f.properties.risk_level||'none',p=f.properties.high_risk_probability||0,c=RC[r];return{fillColor:c,fillOpacity:r==='none'?0:Math.min(.15+p*.55,.7),color:'#7c3aed',weight:.2,opacity:.35}};
+const aStyle=f=>{const r=f.properties.risk_level||'none',d=f.properties.depth_m||0,c=RC[r];return{fillColor:c,fillOpacity:r==='none'?0:Math.min(.3+d*.1,.85),color:c,weight:.2,opacity:.5}};
 
 function buildFloodLayer(gj){
   if(floodLayer){map.removeLayer(floodLayer);floodLayer=null;}
-  if(!gj||!gj.features||!gj.features.length) return;
-  floodLayer=L.geoJSON(gj,{style:floodStyle,onEachFeature:(f,l)=>{
-    l.on('click',()=>l.bindPopup(makePopup(f)).openPopup());
+  if(!gj?.features?.length) return;
+  floodLayer=L.geoJSON(gj,{style:fStyle,onEachFeature:(f,l)=>{
+    l.on('click',e=>{L.DomEvent.stopPropagation(e);const ctr=l.getBounds().getCenter();showPanel(ctr.lat,ctr.lng);});
   }});
-  if(layerVis.flood) floodLayer.addTo(map);
+  if(lv.flood) floodLayer.addTo(map);
 }
-
 function buildMlLayer(){
   if(mlLayer){map.removeLayer(mlLayer);mlLayer=null;}
-  mlLayer=L.geoJSON(RISK_ML,{style:mlStyle,onEachFeature:(f,l)=>{
-    l.on('click',()=>l.bindPopup(makeMlPopup(f)).openPopup());
+  mlLayer=L.geoJSON(RISK_ML,{style:mStyle,onEachFeature:(f,l)=>{
+    l.on('click',e=>{L.DomEvent.stopPropagation(e);const ctr=l.getBounds().getCenter();showPanel(ctr.lat,ctr.lng);});
   }});
-  if(layerVis.ml) mlLayer.addTo(map);
+  if(lv.ml) mlLayer.addTo(map);
 }
 
-function toggleLayer(name){
-  layerVis[name]=!layerVis[name];
-  document.getElementById(`sw-${name}`).classList.toggle('on',layerVis[name]);
-  const lmap={flood:floodLayer,ml:mlLayer,anim:animLayer};
-  const l=lmap[name]; if(!l) return;
-  layerVis[name]?l.addTo(map):map.removeLayer(l);
-}
+map.on('click',e=>showPanel(e.latlng.lat,e.latlng.lng));
 
-// Legend
 const legend=L.control({position:'bottomright'});
 legend.onAdd=()=>{
   const d=L.DomUtil.create('div','map-legend');
-  d.innerHTML=`<h4>Risk level</h4>`
-    +['extreme','high','medium','low','none'].map(r=>`<div class="leg-row"><div class="leg-sw" style="background:${RC[r]}"></div><span>${RL[r]}</span></div>`).join('');
+  d.innerHTML=`<div class="leg-title">Risk Level</div>`
+    +['extreme','high','medium','low','none'].map(r=>`<div class="leg-row"><div class="leg-dot" style="background:${RC[r]}"></div><span>${RL[r]}</span></div>`).join('');
   return d;
 };
 legend.addTo(map);
+map.fitBounds([[36.6,10.0],[37.2,10.6]],{padding:[50,50]});
 
-// ── ALERT SYSTEM ─────────────────────────────────────
-let bannerDismissed=false;
+// ── PANEL ──────────────────────────────────────────
+let currentLat=null,currentLon=null,currentCityName=null;
+let locAnimInt=null,locAnimFrame=0,locAnimPlaying=false;
+let locChart=null;
 
-function showAlerts(scenario){
-  const level=computeAlertLevel(scenario);
-  const ad=ALERT_DEFS[level];
-  const s=ANALYSIS.scenarios[scenario]||{};
-  const rc=s.risk_counts||{};
+function showPanel(lat,lon,cityName){
+  document.getElementById('alerts-panel').classList.remove('open');
+  stopLocAnim();
 
-  // Update banner
-  if(!bannerDismissed && level!=='none'){
-    const banner=document.getElementById('alert-banner');
-    banner.className=`show level-${level}`;
-    document.getElementById('alert-icon').textContent=ad.icon;
-    document.getElementById('alert-title').textContent=ad.title;
-    document.getElementById('alert-sub').textContent=
-      `${s.flooded_area_km2||0} km² at risk · Max depth ${s.max_depth_m||0}m · ${s.flooded_pct||0}% of study area`;
-  } else if(level==='none'){
-    document.getElementById('alert-banner').className='';
-  }
+  if(locMarker) map.removeLayer(locMarker);
+  locMarker=L.marker([lat,lon],{icon:L.divIcon({
+    className:'',html:`<div class="pin-pulse"></div>`,iconSize:[12,12],iconAnchor:[6,6]
+  })}).addTo(map);
 
-  // Update sidebar alert summary
-  const levelEl=document.getElementById('as-level');
-  levelEl.textContent=ad.title.split('—')[0].trim();
-  levelEl.className=`as-level ${level}`;
-
-  const counts=[
-    {label:'Extreme',val:rc.extreme||0,col:'#b71c1c'},
-    {label:'High',val:rc.high||0,col:'#e65100'},
-    {label:'Medium',val:rc.medium||0,col:'#ff9800'},
-    {label:'Low',val:rc.low||0,col:'#1e90ff'},
-  ];
-  document.getElementById('as-counts').innerHTML=counts.map(c=>`
-    <div class="as-count">
-      <div class="n" style="color:${c.col}">${c.val.toLocaleString()}</div>
-      <div class="l">${c.label}</div>
-    </div>`).join('');
-
-  // Update alert badge
-  const totalAtRisk=(rc.extreme||0)+(rc.high||0)+(rc.medium||0);
-  const badge=document.getElementById('alert-count-badge');
-  if(totalAtRisk>0){
-    badge.style.display='inline';
-    badge.textContent=totalAtRisk>999?Math.round(totalAtRisk/1000)+'k':totalAtRisk;
-    badge.style.background=level==='extreme'?'#b71c1c':level==='high'?'#e65100':'#ff9800';
-  } else {
-    badge.style.display='none';
-  }
-
-  // Build alert panel cards
-  buildAlertCards(scenario, level, s, rc);
+  currentLat=lat; currentLon=lon; currentCityName=cityName||null;
+  renderPanel(lat,lon,cityName,null,null);
 }
 
-function buildAlertCards(scenario, level, s, rc){
-  const body=document.getElementById('ap-body');
-  if(level==='none'){
-    body.innerHTML=`<div class="no-alerts">✅ No active flood alerts<br><span style="font-size:11px;margin-top:4px;display:block">Switch to a storm scenario to see alerts</span></div>`;
+function renderPanel(lat,lon,cityName,customRain,customSea){
+  const data=analyzeLocation(lat,lon,customRain,customSea);
+  document.getElementById('panel-empty').style.display='none';
+  const pc=document.getElementById('panel-content');
+  pc.style.display='flex';
+
+  document.getElementById('ph-title').textContent=cityName||`${lat.toFixed(5)}°N, ${lon.toFixed(5)}°E`;
+  document.getElementById('ph-coords').textContent=`${lat.toFixed(5)}°N  ${lon.toFixed(5)}°E`;
+
+  if(!data){
+    document.getElementById('panel-body').innerHTML=`<div class="outside-msg">
+      <div class="om-icon">🌍</div>
+      <div class="om-title">Outside analysis zone</div>
+      <div class="om-sub">Detailed ML analysis covers the Tunis coastal region.<br><code>36.6–37.2°N · 10.0–10.6°E</code></div>
+    </div>`;
     return;
   }
 
-  let html='';
+  const d=data;
+  const wr=d.worst;
+  const wc=RC[wr];
+  const maxDepth=Math.max(d.fe,0.01);
 
-  // Overall alert
-  const ad=ALERT_DEFS[level];
-  html+=`<div class="alert-card ${level}">
-    <div class="ac-title">${ad.icon} ${ad.title}</div>
-    <div class="ac-body">${ad.sub}
-      <br><br>
-      <strong>Scenario:</strong> ${s.total_rain_mm}mm rainfall · +${s.sea_level_rise_m}m sea level rise<br>
-      <strong>Area at risk:</strong> ${s.flooded_area_km2} km² (${s.flooded_pct}% of region)<br>
-      <strong>Max flood depth:</strong> ${s.max_depth_m}m
+  // Risk descriptions (short, expert-level)
+  const riskDesc={
+    none:'Terrain elevation and morphology indicate negligible inundation probability under all modelled scenarios.',
+    low:'Low-lying features present. Minor inundation (<25cm) possible under moderate–extreme forcing.',
+    medium:'Moderate inundation (25–75cm) expected under the 10–100 year return period event. Ground floor damage likely.',
+    high:'Significant inundation (75–150cm) under extreme forcing. Structural risk and evacuation required.',
+    extreme:'Critical inundation (>150cm). Life-threatening conditions. Immediate evacuation protocol applies.',
+  };
+
+  // Animation depths
+  const animDepths=(typeof ANIMATION_META!=='undefined')?ANIMATION_META.map(m=>{
+    const sf=m.flooded_km2/Math.max(ANIMATION_META[6].flooded_km2,1);
+    return parseFloat((d.fe*sf).toFixed(3));
+  }):[];
+  const frameTimeline=animDepths.map((dep,i)=>
+    `<div class="anim-frame${dep>0.05?' wet':''}" id="lf${i}" onclick="jumpFrame(${i})" title="H+${i}: ${dep}m"></div>`
+  ).join('');
+
+  document.getElementById('panel-body').innerHTML = `
+    <!-- RISK SUMMARY -->
+    <div class="risk-bar ${wr}">
+      <div class="rb-level" style="color:${wc}">${RL[wr].toUpperCase()}</div>
+      <div class="rb-desc">${riskDesc[wr]}</div>
     </div>
-    <span class="ac-stat">Return period: ${scenario==='moderate'?'~10 years':'~100 years'}</span>
-    <span class="ac-stat">${s.flooded_area_km2} km² flooded</span>
-  </div>`;
 
-  // Zone-specific alerts
-  if((rc.extreme||0)>0){
-    html+=`<div class="alert-card extreme">
-      <div class="ac-title">🆘 Extreme risk zones — ${rc.extreme} grid cells</div>
-      <div class="ac-body">
-        Flood depth exceeding 1.5m. These zones face life-threatening conditions.<br>
-        <strong>Action:</strong> Immediate evacuation required. Do not re-enter until cleared by authorities.
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Max flood depth</div>
+        <div class="kpi-value" style="color:${wc}">${d.fe.toFixed(2)}</div>
+        <div class="kpi-unit">metres · extreme scenario</div>
       </div>
-      <span class="ac-stat">${(rc.extreme*PIXEL_KM2).toFixed(1)} km²</span>
-      <span class="ac-stat">Depth &gt; 1.5m</span>
-    </div>`;
-  }
-
-  if((rc.high||0)>0){
-    html+=`<div class="alert-card high">
-      <div class="ac-title">🚨 High risk zones — ${rc.high} grid cells</div>
-      <div class="ac-body">
-        Flood depth 0.75–1.5m. Dangerous for pedestrians. Vehicles will be swept away.<br>
-        <strong>Action:</strong> Evacuate ground floors. Move to higher ground or upper floors.
+      <div class="kpi">
+        <div class="kpi-label">Elevation</div>
+        <div class="kpi-value">${d.elev.toFixed(1)}</div>
+        <div class="kpi-unit">m asl</div>
       </div>
-      <span class="ac-stat">${(rc.high*PIXEL_KM2).toFixed(1)} km²</span>
-      <span class="ac-stat">Depth 0.75–1.5m</span>
-    </div>`;
-  }
-
-  if((rc.medium||0)>0){
-    html+=`<div class="alert-card medium">
-      <div class="ac-title">⚠️ Medium risk zones — ${rc.medium} grid cells</div>
-      <div class="ac-body">
-        Flood depth 0.25–0.75m. Roads likely impassable. Risk of property damage.<br>
-        <strong>Action:</strong> Avoid travel. Protect valuables. Monitor emergency broadcasts.
+      <div class="kpi">
+        <div class="kpi-label">ML risk class</div>
+        <div class="kpi-value" style="color:${RC[d.ml.name]};font-size:14px">${d.ml.name.toUpperCase()}</div>
+        <div class="kpi-unit">Random Forest · 96.3% acc.</div>
       </div>
-      <span class="ac-stat">${(rc.medium*PIXEL_KM2).toFixed(1)} km²</span>
-      <span class="ac-stat">Depth 0.25–0.75m</span>
-    </div>`;
-  }
-
-  if((rc.low||0)>0){
-    html+=`<div class="alert-card low">
-      <div class="ac-title">ℹ️ Low risk zones — ${rc.low} grid cells</div>
-      <div class="ac-body">
-        Minor flooding (below 0.25m) in low-lying areas. Nuisance flooding likely.<br>
-        <strong>Action:</strong> Avoid walking near rivers and drainage channels. Stay informed.
+      <div class="kpi">
+        <div class="kpi-label">High-risk P(X)</div>
+        <div class="kpi-value">${(d.ml.highProb*100).toFixed(0)}</div>
+        <div class="kpi-unit">percent</div>
       </div>
-      <span class="ac-stat">${(rc.low*PIXEL_KM2).toFixed(1)} km²</span>
-      <span class="ac-stat">Depth &lt; 0.25m</span>
-    </div>`;
-  }
+    </div>
 
-  html+=`<div style="font-size:10px;color:#8b949e;padding:8px 0;text-align:center">
-    Emergency services: 197 (Civil Protection) · 190 (Police) · 198 (Fire)
-  </div>`;
+    <!-- SCENARIOS -->
+    <div class="sec-label">Flood scenarios</div>
+    <div class="scenarios">
+      ${['normal','moderate','extreme'].map(sc=>{
+        const sd=d.scenarios[sc];
+        const def=SCENARIOS_DEF[sc];
+        const barPct=Math.min(sd.d/maxDepth*100,100);
+        const tt=SCENARIO_TOOLTIPS[sc];
+        return `<div class="sc-row" style="border-left:2px solid ${def.color}22">
+          <div class="sc-dot" style="background:${def.color}"></div>
+          <div class="sc-name" style="color:${def.color}">${def.label}</div>
+          <div class="sc-bar-bg"><div class="sc-bar" style="width:${barPct}%;background:${RC[sd.risk]}"></div></div>
+          <div class="sc-depth" style="color:${RC[sd.risk]}">${sd.d>0?sd.d.toFixed(2)+'m':'—'}</div>
+          <div class="sc-risk-tag" style="color:${RC[sd.risk]}">${RL[sd.risk]}</div>
+          <div class="sc-tooltip">
+            <div class="sc-tooltip-title">${tt.title}</div>
+            ${tt.desc}
+          </div>
+        </div>`;
+      }).join('')}
+      ${d.customDepth!==null?`<div class="sc-row" style="border-left:2px solid #7c3aed44">
+        <div class="sc-dot" style="background:#7c3aed"></div>
+        <div class="sc-name" style="color:#a78bfa">Custom</div>
+        <div class="sc-bar-bg"><div class="sc-bar" style="width:${Math.min(d.customDepth/maxDepth*100,100)}%;background:${RC[depthToRisk(d.customDepth)]}"></div></div>
+        <div class="sc-depth" style="color:${RC[depthToRisk(d.customDepth)]}">${d.customDepth>0?d.customDepth.toFixed(2)+'m':'—'}</div>
+        <div class="sc-risk-tag" style="color:${RC[depthToRisk(d.customDepth)]}">${RL[depthToRisk(d.customDepth)]}</div>
+      </div>`:''}
+    </div>
 
-  body.innerHTML=html;
+    <!-- ML BLOCK -->
+    <div class="sec-label">ML prediction</div>
+    <div class="ml-block">
+      <div class="ml-header">
+        <div class="ml-title">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0112 4.5v15a2.5 2.5 0 01-5 0v-15A2.5 2.5 0 019.5 2z"/><path d="M14.5 8A2.5 2.5 0 0117 10.5v9a2.5 2.5 0 01-5 0v-9A2.5 2.5 0 0114.5 8z"/></svg>
+          Random Forest
+        </div>
+        <div class="ml-chip" style="color:${RC[d.ml.name]};border-color:${RC[d.ml.name]}44">${d.ml.name}</div>
+      </div>
+      ${[
+        ['Elevation',d.elev,0,160,'#38bdf8'],
+        ['Curvature',Math.abs(d.curv),0,20,'#ef4444'],
+        ['Slope',d.slope,0,8,'#f59e0b'],
+        ['TWI',d.twi,0,15,'#0ea5e9'],
+      ].map(([name,val,mn,mx,col])=>{
+        const pct=Math.max(0,Math.min(100,(val-mn)/(mx-mn)*100));
+        const disp=name==='Curvature'?(d.curv>0?'+':'')+d.curv.toFixed(2):
+                  name==='Elevation'?d.elev.toFixed(0)+'m':
+                  name==='Slope'?d.slope.toFixed(1)+'°':d.twi.toFixed(1);
+        return `<div class="ml-feat-row">
+          <div class="ml-feat-label">${name}</div>
+          <div class="ml-feat-bg"><div class="ml-feat-fill" style="width:${pct}%;background:${col}"></div></div>
+          <div class="ml-feat-val" style="color:${col}">${disp}</div>
+        </div>`;
+      }).join('')}
+      <div class="ml-prob-row">
+        <div class="ml-prob-label">P(high|extreme)</div>
+        <div class="ml-prob-bg"><div class="ml-prob-fill" style="width:${(d.ml.highProb*100).toFixed(0)}%;background:${wc}"></div></div>
+        <div class="ml-prob-pct" style="color:${wc}">${(d.ml.highProb*100).toFixed(0)}%</div>
+      </div>
+    </div>
+
+    <!-- ANIMATION -->
+    <div class="sec-label">12-hour simulation</div>
+    <div class="anim-block">
+      <div class="anim-controls">
+        <button class="anim-play-btn" id="loc-anim-btn" onclick="toggleLocAnim()">
+          <svg id="loc-anim-icon" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        </button>
+        <div class="anim-frames">${frameTimeline}</div>
+        <span class="anim-speed" id="loc-anim-speed">0.7s</span>
+      </div>
+      <div class="anim-stat-row">
+        <div class="anim-stat"><div class="anim-stat-l">Hour</div><div class="anim-stat-v" id="lafi-h">—</div></div>
+        <div class="anim-stat"><div class="anim-stat-l">Depth here</div><div class="anim-stat-v" id="lafi-d">—</div></div>
+        <div class="anim-stat"><div class="anim-stat-l">Phase</div><div class="anim-stat-v" id="lafi-p">—</div></div>
+        <div class="anim-stat"><div class="anim-stat-l">Regional</div><div class="anim-stat-v" id="lafi-r">—</div></div>
+      </div>
+    </div>
+
+    <!-- DEPTH CHART -->
+    <div class="sec-label">Depth over time — hover to expand</div>
+    <div class="chart-block">
+      <div class="chart-container" id="loc-chart-wrap">
+        <canvas id="loc-chart"></canvas>
+        <span class="chart-expand-hint">↕ hover to expand</span>
+      </div>
+    </div>
+
+    <!-- CUSTOM SIMULATION -->
+    <div class="sec-label">Custom scenario</div>
+    <div class="custom-form">
+      <div class="custom-form-header">
+        <span>Parameters</span>
+        <span style="color:#52525b;font-size:9px;font-weight:400">Enter values and run</span>
+      </div>
+      <div class="custom-form-body">
+        <div class="field-row">
+          <div class="field-label">Rainfall intensity</div>
+          <div class="field-desc">Total precipitation for the storm event</div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="number" id="cf-rain" min="0" max="500" step="0.1" placeholder="e.g. 80" oninput="document.getElementById('cf-rain-sl').value=this.value">
+            <span class="field-unit">mm</span>
+          </div>
+          <input class="field-range" type="range" id="cf-rain-sl" min="0" max="300" step="1" value="80" oninput="document.getElementById('cf-rain').value=this.value">
+        </div>
+        <div class="field-row">
+          <div class="field-label">Sea level anomaly</div>
+          <div class="field-desc">Storm surge / sea level rise above mean</div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="number" id="cf-sea" min="0" max="3" step="0.01" placeholder="e.g. 0.5" oninput="document.getElementById('cf-sea-sl').value=this.value*100">
+            <span class="field-unit">m</span>
+          </div>
+          <input class="field-range" type="range" id="cf-sea-sl" min="0" max="300" step="1" value="50" oninput="document.getElementById('cf-sea').value=(this.value/100).toFixed(2)">
+        </div>
+        <div class="field-row">
+          <div class="field-label">Duration</div>
+          <div class="field-desc">Storm event duration (informational only)</div>
+          <div class="field-input-wrap">
+            <input class="field-input" type="number" id="cf-dur" min="1" max="72" step="1" placeholder="e.g. 24">
+            <span class="field-unit">h</span>
+          </div>
+        </div>
+        <button class="custom-run-btn" onclick="runCustom()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
+          Run simulation
+        </button>
+        <div class="custom-result" id="custom-result"></div>
+      </div>
+    </div>
+
+    <!-- ACTION -->
+    <div class="sec-label">Recommended action</div>
+    <div class="action-block ${wr}">
+      <div class="action-title" style="color:${wc}">${{none:'✅ No action required',low:'ℹ️ Monitor',medium:'⚠️ Precautionary measures',high:'🚨 Evacuation advisory',extreme:'🆘 Emergency evacuation'}[wr]}</div>
+      ${buildActions(wr,d)}
+    </div>
+
+    <button class="report-btn" onclick="exportReport()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Export Full Report
+    </button>
+  `;
+
+  buildLocChart(animDepths);
 }
 
-function toggleAlertPanel(){
-  document.getElementById('alert-panel').classList.toggle('show');
+function buildActions(risk,d){
+  const steps={
+    none:['No inundation risk in any modelled scenario.','Standard meteorological monitoring sufficient.'],
+    low:['Monitor forecast when cumulative rainfall forecast >30mm/24h.',`Potential surface water up to ${d.fm.toFixed(2)}m under 10-year event.`,'Inspect drainage infrastructure before storm season.'],
+    medium:[`Expect up to ${d.fm.toFixed(2)}m (10yr) / ${d.fe.toFixed(2)}m (100yr) inundation.`,'Relocate ground-floor assets and documents above 1m.','Avoid all vehicle movement through the zone during event.','Emergency contacts: Civil Protection 197 · Fire Brigade 198'],
+    high:[`Inundation ${d.fe.toFixed(2)}m projected under extreme forcing.`,'Activate pre-emptive evacuation protocol before event onset.','Do not attempt road transit — vehicles become trapped at 30cm depth.','Contact Civil Protection (197) for evacuation assistance.','Structural assessment recommended for ground-floor infrastructure.'],
+    extreme:[`Critical: ${d.fe.toFixed(2)}m inundation. Life-threatening above 1.5m.`,'EVACUATE IMMEDIATELY upon storm warning. Do not wait for water onset.','Move to elevated solid structure (upper floors of RC buildings).','Emergency protocol: 197 (Civil Protection) · 198 (Fire) · 190 (Police)','Do not re-enter zone until official all-clear issued.'],
+  };
+  return (steps[risk]||steps.none).map((s,i)=>`
+    <div class="action-step">
+      <div class="action-num" style="background:${RC[risk]}22;color:${RC[risk]};border:1px solid ${RC[risk]}44">${i+1}</div>
+      <span>${s}</span>
+    </div>`).join('');
 }
 
-function dismissBanner(){
-  bannerDismissed=true;
-  document.getElementById('alert-banner').className='';
+// ── LOCATION ANIMATION ─────────────────────────────
+function toggleLocAnim(){
+  locAnimPlaying=!locAnimPlaying;
+  const btn=document.getElementById('loc-anim-btn');
+  const icon=document.getElementById('loc-anim-icon');
+  if(locAnimPlaying){
+    btn.classList.add('playing');
+    icon.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    locAnimFrame=0; runLocFrame();
+    locAnimInt=setInterval(()=>{locAnimFrame=(locAnimFrame+1)%ANIMATION_FRAMES.length;runLocFrame();},700);
+  } else {
+    stopLocAnim();
+    btn.classList.remove('playing');
+    icon.innerHTML='<polygon points="5,3 19,12 5,21"/>';
+  }
+}
+function stopLocAnim(){ locAnimPlaying=false; clearInterval(locAnimInt); }
+function jumpFrame(i){ locAnimFrame=i; runLocFrame(); }
+
+function runLocFrame(){
+  const meta=typeof ANIMATION_META!=='undefined'?ANIMATION_META[locAnimFrame]:null;
+  if(!meta||!currentLat) return;
+  const data=analyzeLocation(currentLat,currentLon);
+  if(!data) return;
+  const sf=meta.flooded_km2/Math.max(ANIMATION_META[6].flooded_km2,1);
+  const depth=parseFloat((data.fe*sf).toFixed(3));
+  document.querySelectorAll('.anim-frame').forEach((el,i)=>el.classList.toggle('active',i===locAnimFrame));
+  const hEl=document.getElementById('lafi-h');
+  const dEl=document.getElementById('lafi-d');
+  const pEl=document.getElementById('lafi-p');
+  const rEl=document.getElementById('lafi-r');
+  if(hEl) hEl.textContent=`H+${meta.hour}`;
+  if(dEl){dEl.textContent=depth>0.01?depth+'m':'dry';dEl.style.color=depth>0.01?RC[depthToRisk(depth)]:'#52525b';}
+  if(pEl){pEl.textContent=meta.phase==='rising'?'Rising':'Receding';pEl.style.color=meta.phase==='rising'?'#f97316':'#38bdf8';}
+  if(rEl) rEl.textContent=meta.flooded_km2+' km²';
+  // Sync map animation
+  if(typeof ANIMATION_FRAMES!=='undefined'){
+    if(animLayer){map.removeLayer(animLayer);animLayer=null;}
+    animLayer=L.geoJSON(ANIMATION_FRAMES[locAnimFrame],{style:aStyle});
+    lv.anim=true; animLayer.addTo(map);
+  }
 }
 
-// ── CHARTS ───────────────────────────────────────────
-let riskChart=null,depthChart=null;
-
-function updateStats(scenario){
-  const s=ANALYSIS.scenarios[scenario]||{};
-  document.getElementById('s-area').textContent=s.flooded_area_km2||'0';
-  document.getElementById('s-pct').textContent=s.flooded_pct||'0';
-  document.getElementById('s-maxd').textContent=s.max_depth_m||'0';
-  document.getElementById('s-meand').textContent=s.mean_depth_m||'0';
-
-  const rc=s.risk_counts||{};
-  const total=Math.max(Object.values(rc).reduce((a,b)=>a+b,0),1);
-  document.getElementById('risk-bars').innerHTML=
-    ['low','medium','high','extreme'].map(r=>{
-      const cnt=rc[r]||0,km2=(cnt*PIXEL_KM2).toFixed(1),pct=(cnt/total*100).toFixed(1);
-      return `<div class="rrow">
-        <div class="rlabel" style="color:${RC[r]}">${r}</div>
-        <div class="rbg"><div class="rfill" style="width:${pct}%;background:${RC[r]}"></div></div>
-        <div class="rkm">${km2} km²</div>
-      </div>`;
-    }).join('');
-
-  const vals=['none','low','medium','high','extreme'].map(r=>((rc[r]||0)*PIXEL_KM2).toFixed(1));
-  if(riskChart) riskChart.destroy();
-  riskChart=new Chart(document.getElementById('risk-chart'),{
-    type:'bar',
-    data:{labels:['None','Low','Med','High','Ext'],
-          datasets:[{data:vals,backgroundColor:Object.values(RC),borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#8b949e',font:{size:9}},grid:{color:'#21262d'}},
-              y:{ticks:{color:'#8b949e',font:{size:9}},grid:{color:'#21262d'},
-                 title:{display:true,text:'km²',color:'#8b949e',font:{size:9}}}}}
-  });
-}
-
-function buildDepthChart(){
-  if(typeof ANIMATION_META==='undefined') return;
-  const hours=ANIMATION_META.map(f=>f.hour+'h');
-  const flooded=ANIMATION_META.map(f=>f.flooded_km2);
-  const sea=ANIMATION_META.map(f=>f.sea_level_m);
-  if(depthChart) depthChart.destroy();
-  depthChart=new Chart(document.getElementById('depth-chart'),{
+function buildLocChart(depths){
+  if(locChart) locChart.destroy();
+  const canvas=document.getElementById('loc-chart');
+  if(!canvas) return;
+  locChart=new Chart(canvas,{
     type:'line',
-    data:{labels:hours,datasets:[
-      {label:'Flooded km²',data:flooded,borderColor:'#1e90ff',borderWidth:1.5,fill:true,backgroundColor:'#1e90ff18',tension:.4,pointRadius:2,yAxisID:'y'},
-      {label:'Sea level m',data:sea,borderColor:'#ff9800',borderWidth:1.5,fill:false,tension:.4,pointRadius:2,yAxisID:'y2'},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:true,labels:{color:'#8b949e',font:{size:8},boxWidth:10}}},
+    data:{
+      labels:depths.map((_,i)=>`H+${i}`),
+      datasets:[{
+        data:depths,
+        borderColor:'#38bdf8', borderWidth:2,
+        fill:true, backgroundColor:'rgba(56,189,248,.08)',
+        tension:.4, pointRadius:3, pointBackgroundColor:'#38bdf8',
+        pointHoverRadius:6, pointHoverBackgroundColor:'#fff',
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#18181b', borderColor:'#3f3f46', borderWidth:1,
+          titleColor:'#fafafa', bodyColor:'#a1a1aa',
+          titleFont:{family:'DM Mono',size:11},
+          bodyFont:{family:'DM Mono',size:10},
+          padding:10,
+          callbacks:{
+            title:ctx=>`Hour +${ctx[0].dataIndex}`,
+            label:ctx=>{
+              const v=ctx.raw;
+              const risk=depthToRisk(v);
+              return `Depth: ${v.toFixed(3)}m  [${RL[risk]}]`;
+            },
+          }
+        },
+      },
       scales:{
-        x:{ticks:{color:'#8b949e',font:{size:7}},grid:{color:'#21262d'}},
-        y:{ticks:{color:'#1e90ff',font:{size:8}},grid:{color:'#21262d'}},
-        y2:{position:'right',ticks:{color:'#ff9800',font:{size:8}},grid:{display:false}}
+        x:{ticks:{color:'#52525b',font:{family:'DM Mono',size:9}},grid:{color:'#27272a'}},
+        y:{min:0,ticks:{color:'#52525b',font:{family:'DM Mono',size:9}},grid:{color:'#27272a'},
+           title:{display:true,text:'depth (m)',color:'#52525b',font:{family:'DM Mono',size:9}}},
       }
     }
   });
 }
 
-function updateFeatImp(){
-  const imp=ML_META.feature_importances||{};
-  const sorted=Object.entries(imp).sort((a,b)=>b[1]-a[1]);
-  document.getElementById('feat-imp').innerHTML=sorted.map(([n,v])=>
-    `<div class="frow"><div class="fname">${n}</div>
-     <div class="fbg"><div class="ffill" style="width:${(v*100).toFixed(0)}%"></div></div>
-     <div class="fpct">${(v*100).toFixed(1)}%</div></div>`).join('');
-}
-
-// ── SCENARIO ─────────────────────────────────────────
-let currentScenario='extreme';
-bannerDismissed=false;
-
-function setScenario(name){
-  currentScenario=name;
-  bannerDismissed=false;
-  ['normal','moderate','extreme'].forEach(s=>
-    document.getElementById(`btn-${s}`).classList.toggle('active',s===name));
-  buildFloodLayer(SCENARIOS[name].geojson);
-  updateStats(name);
-  showAlerts(name);
-  const rm={normal:2,moderate:55,extreme:176},sm={normal:0,moderate:30,extreme:120};
-  document.getElementById('rain-sl').value=rm[name];
-  document.getElementById('sea-sl').value=sm[name];
-  document.getElementById('rain-v').textContent=rm[name]+' mm';
-  document.getElementById('sea-v').textContent=(sm[name]/100).toFixed(1)+' m';
-}
-
-function onRain(v){
-  document.getElementById('rain-v').textContent=v+' mm';
-  if(parseInt(v)<20) setScenario('normal');
-  else if(parseInt(v)<110) setScenario('moderate');
-  else setScenario('extreme');
-}
-function onSea(v){ document.getElementById('sea-v').textContent=(v/100).toFixed(1)+' m'; }
-
-// ── ANIMATION ────────────────────────────────────────
-let isPlaying=false,currentFrame=0,playInterval=null;
-
-function togglePlay(){
-  isPlaying=!isPlaying;
-  const btn=document.getElementById('play-btn');
-  const icon=document.getElementById('play-icon');
-  if(isPlaying){
-    btn.classList.add('playing');
-    icon.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-    document.getElementById('play-label').textContent='Pause simulation';
-    layerVis.anim=true; document.getElementById('sw-anim').classList.add('on');
-    currentFrame=0; playFrame();
-    const spd=parseInt(document.getElementById('speed-sl').value);
-    playInterval=setInterval(()=>{ currentFrame=(currentFrame+1)%ANIMATION_FRAMES.length; playFrame(); },spd);
-  } else {
-    btn.classList.remove('playing');
-    icon.innerHTML='<polygon points="5,3 19,12 5,21"/>';
-    document.getElementById('play-label').textContent='Play 12-hour simulation';
-    clearInterval(playInterval);
+// ── CUSTOM SCENARIO ────────────────────────────────
+function runCustom(){
+  const rain=parseFloat(document.getElementById('cf-rain').value);
+  const sea=parseFloat(document.getElementById('cf-sea').value);
+  if(isNaN(rain)||isNaN(sea)){
+    alert('Please enter both rainfall (mm) and sea level anomaly (m).');
+    return;
+  }
+  if(!currentLat){return;}
+  renderPanel(currentLat,currentLon,currentCityName,rain,sea);
+  const res=document.getElementById('custom-result');
+  if(res){
+    const data=analyzeLocation(currentLat,currentLon,rain,sea);
+    if(data&&data.customDepth!==null){
+      const r=depthToRisk(data.customDepth);
+      res.style.color=RC[r];
+      res.innerHTML=`<strong>Custom result:</strong> Rain=${rain}mm · Sea+${sea}m → Depth <strong>${data.customDepth.toFixed(3)}m</strong> [${RL[r]}]`;
+      res.classList.add('show');
+    }
   }
 }
 
-function onSpeed(v){
-  document.getElementById('speed-v').textContent=(v/1000).toFixed(1)+'s';
-  if(isPlaying){ clearInterval(playInterval); playInterval=setInterval(()=>{ currentFrame=(currentFrame+1)%ANIMATION_FRAMES.length; playFrame(); },parseInt(v)); }
+function closePanel(){
+  document.getElementById('panel-empty').style.display='flex';
+  document.getElementById('panel-content').style.display='none';
+  stopLocAnim();
+  if(locMarker){map.removeLayer(locMarker);locMarker=null;}
+  currentLat=null;currentLon=null;currentCityName=null;
 }
 
-function playFrame(){
-  if(typeof ANIMATION_FRAMES==='undefined') return;
-  const frame=ANIMATION_FRAMES[currentFrame],meta=ANIMATION_META[currentFrame];
-  if(!frame) return;
-  if(animLayer){map.removeLayer(animLayer);animLayer=null;}
-  animLayer=L.geoJSON(frame,{style:animStyle});
-  if(layerVis.anim) animLayer.addTo(map);
-  const pct=(currentFrame/(ANIMATION_FRAMES.length-1))*100;
-  document.getElementById('tbar-fill').style.width=pct+'%';
-  document.getElementById('tbar-marker').style.left=pct+'%';
-  document.getElementById('fi-hour').textContent=meta.hour+'h';
-  document.getElementById('fi-phase').textContent=meta.phase==='rising'?'Rising ↑':'Receding ↓';
-  document.getElementById('fi-phase').style.color=meta.phase==='rising'?'#ff9800':'#4fc3f7';
-  document.getElementById('fi-sea').textContent='+'+meta.sea_level_m+'m';
-  document.getElementById('fi-flooded').textContent=meta.flooded_km2+' km²';
+// ── SCENARIO SWITCHING (top bar) ────────────────────
+let currentScenario='extreme';
+const SCENARIO_DATA={
+  normal:{geojson:FLOOD_DATA,stats:ANALYSIS.scenarios.normal},
+  moderate:{geojson:FLOOD_MODERATE,stats:ANALYSIS.scenarios.moderate},
+  extreme:{geojson:FLOOD_EXTREME,stats:ANALYSIS.scenarios.extreme},
+};
+
+// Called from header scenario badge (not visible — controlled via alerts)
+function setScenario(name){
+  currentScenario=name;
+  const def=SCENARIOS_DEF[name];
+  const s=SCENARIO_DATA[name].stats||{};
+  document.getElementById('sh-name').textContent=def.label.toUpperCase();
+  document.getElementById('sh-rain').textContent=def.rain;
+  document.getElementById('sh-sea').textContent='+'+def.sea;
+  document.getElementById('sh-area').textContent=s.flooded_area_km2||'—';
+  document.getElementById('sh-depth').textContent=s.max_depth_m||'—';
+  document.getElementById('scenario-badge').textContent=`${def.label.toUpperCase()} · ${def.rain}mm`;
+  document.getElementById('scenario-badge').style.background=name==='extreme'?'#2a0a0a':name==='moderate'?'#1c1200':'#0a1c08';
+  document.getElementById('scenario-badge').style.color=def.color;
+  document.getElementById('scenario-badge').style.borderColor=def.color+'44';
+  buildFloodLayer(SCENARIO_DATA[name].geojson);
+  buildAlerts(name);
 }
 
-// ── REPORT EXPORT ────────────────────────────────────
+// ── ALERTS ─────────────────────────────────────────
+function computeAlertLevel(scenario){
+  const s=ANALYSIS.scenarios[scenario]; if(!s) return'none';
+  const rc=s.risk_counts||{};
+  if((rc.extreme||0)>0) return'extreme';
+  if((rc.high||0)>500) return'high';
+  if((rc.medium||0)>500) return'moderate';
+  if((rc.low||0)>0) return'low';
+  return'none';
+}
+function buildAlerts(scenario){
+  const level=computeAlertLevel(scenario);
+  const s=ANALYSIS.scenarios[scenario]||{};
+  const rc=s.risk_counts||{};
+  const adot=document.getElementById('adot');
+  adot.style.display=level!=='none'?'block':'none';
+  if(level!=='none') adot.style.background=RC[level==='moderate'?'medium':level]||RC.extreme;
+  const body=document.getElementById('ap-body');
+  if(level==='none'){body.innerHTML=`<div style="padding:16px;text-align:center;color:#52525b;font-size:11px">No active alerts for ${scenario} scenario.</div>`;return;}
+  const defs={
+    extreme:{t:'Extreme Inundation Risk',b:`>${(rc.extreme*PIXEL_KM2).toFixed(1)} km² face >1.5m flooding. Life-threatening conditions. Evacuation protocol active.`},
+    high:   {t:'High Inundation Risk',   b:`${(rc.high*PIXEL_KM2).toFixed(1)} km² face 0.75–1.5m flooding. Evacuation of ground floors required.`},
+    medium: {t:'Moderate Flood Risk',    b:`${(rc.medium*PIXEL_KM2).toFixed(1)} km² face 0.25–0.75m. Roads impassable. Avoid area.`},
+    low:    {t:'Low Flood Advisory',     b:`${(rc.low*PIXEL_KM2).toFixed(1)} km² face <0.25m. Surface water likely. Monitor conditions.`},
+  };
+  let h=`<div style="padding:8px 0 6px;font-size:9px;color:#52525b;text-transform:uppercase;letter-spacing:.07em">${scenario.toUpperCase()} SCENARIO · ${s.flooded_area_km2} km² at risk</div>`;
+  ['extreme','high','medium','low'].forEach(r=>{
+    if((rc[r]||0)>0&&defs[r]){
+      h+=`<div class="ap-card ${r==='medium'?'medium':r}">
+        <div class="ap-card-title">${defs[r].t}</div>
+        <div class="ap-card-body">${defs[r].b}</div>
+        <span class="ap-tag">${(rc[r]*PIXEL_KM2).toFixed(1)} km²</span>
+        <span class="ap-tag">${rc[r]} cells</span>
+      </div>`;
+    }
+  });
+  h+=`<div style="padding:8px 0 2px;font-size:10px;color:#52525b;text-align:center">Civil Protection 197 · Fire 198 · Police 190</div>`;
+  body.innerHTML=h;
+}
+function toggleAlerts(){
+  document.getElementById('panel-empty').style.display=document.getElementById('panel-content').style.display==='none'?'flex':'none';
+  document.getElementById('panel-content').style.display='none';
+  document.getElementById('alerts-panel').classList.toggle('open');
+}
+
+// ── SEARCH ─────────────────────────────────────────
+const si=document.getElementById('si');
+const sd=document.getElementById('sd');
+si.addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  document.getElementById('sx').style.display=q?'block':'none';
+  if(q.length<2){sd.classList.remove('open');return;}
+  const hits=CITIES.filter(c=>c.name.toLowerCase().includes(q)||c.r.toLowerCase().includes(q)).slice(0,7);
+  if(!hits.length){
+    sd.innerHTML=`<div class="s-item"><div><div class="s-item-name">No results</div><div class="s-item-sub">Try: Tunis, Nabeul, Sfax, Hammamet…</div></div></div>`;
+  } else {
+    sd.innerHTML=hits.map(city=>{
+      const data=analyzeLocation(city.lat,city.lon);
+      const risk=data?data.worst:'—';
+      const rc=RC[risk]||'#52525b';
+      return `<div class="s-item" onclick="selectCity(${city.lat},${city.lon},'${city.name}')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${rc}" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 000 16c4-4 8-8 8-16A8 8 0 0012 2z"/></svg>
+        <div>
+          <div class="s-item-name">${city.name}</div>
+          <div class="s-item-sub">${city.r}</div>
+        </div>
+        ${data?`<span class="s-item-risk" style="background:${rc}18;color:${rc};border:1px solid ${rc}33">${RL[risk]}</span>`:'<span class="s-item-risk" style="background:#27272a;color:#52525b">—</span>'}
+      </div>`;
+    }).join('');
+  }
+  sd.classList.add('open');
+});
+si.addEventListener('keydown',e=>{
+  if(e.key==='Escape') clearSearch();
+  if(e.key==='Enter'){const f=sd.querySelector('.s-item');if(f)f.click();}
+});
+document.addEventListener('click',e=>{if(!document.getElementById('sw').contains(e.target))sd.classList.remove('open');});
+function selectCity(lat,lon,name){
+  si.value=name; sd.classList.remove('open');
+  map.flyTo([lat,lon],inBounds(lat,lon)?13:9,{duration:1});
+  setTimeout(()=>showPanel(lat,lon,name),800);
+}
+function clearSearch(){si.value='';document.getElementById('sx').style.display='none';sd.classList.remove('open');si.focus();}
+
+// ── REPORT ─────────────────────────────────────────
 function exportReport(){
   const s=ANALYSIS.scenarios[currentScenario]||{};
   const rc=s.risk_counts||{};
-  const rp={normal:'Less than 2 years',moderate:'Approximately 10 years',extreme:'Approximately 100 years'};
-  const actions={
-    none:'No action required. Normal conditions prevail.',
-    normal:'No action required. Normal conditions prevail.',
-    moderate:'Advisory issued. Avoid coastal roads and low-lying areas. Prepare emergency supplies. Monitor civil protection broadcasts.',
-    extreme:'Emergency alert. Immediate evacuation of all flood-risk zones. Contact Civil Protection (197). Do not attempt to drive through flood water.',
-  };
+  const def=SCENARIOS_DEF[currentScenario];
+  const level=computeAlertLevel(currentScenario);
   const now=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const time=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const cd=currentLat?analyzeLocation(currentLat,currentLon):null;
+  const rp={normal:'< 2 years',moderate:'~10 years',extreme:'~100 years'};
+  const alertColors={none:'#e8f4fd',low:'#e8f5e9',moderate:'#fff8e1',high:'#fbe9e7',extreme:'#ffebee'};
+  const alertTextColors={none:'#0d3b6e',low:'#1b5e20',moderate:'#e65100',high:'#bf360c',extreme:'#b71c1c'};
 
-  const html=`<!DOCTYPE html><html><head>
-  <meta charset="UTF-8">
-  <title>Flood Risk Alert Report — ${now}</title>
+  const locSection=cd?`
+  <section>
+    <h2>Location Analysis — ${currentCityName||`${parseFloat(currentLat).toFixed(4)}°N, ${parseFloat(currentLon).toFixed(4)}°E`}</h2>
+    <div class="meta-row">Coordinates: ${parseFloat(currentLat).toFixed(5)}°N, ${parseFloat(currentLon).toFixed(5)}°E &nbsp;·&nbsp; Elevation: ${cd.elev.toFixed(1)}m asl</div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kv" style="color:${RC[cd.worst]}">${cd.fe.toFixed(2)}m</div><div class="kl">Max depth (extreme)</div></div>
+      <div class="kpi"><div class="kv">${cd.elev.toFixed(1)}m</div><div class="kl">Elevation asl</div></div>
+      <div class="kpi"><div class="kv" style="color:${RC[cd.ml.name]}">${cd.ml.name.toUpperCase()}</div><div class="kl">ML risk class</div></div>
+      <div class="kpi"><div class="kv">${(cd.ml.highProb*100).toFixed(0)}%</div><div class="kl">P(high|extreme)</div></div>
+    </div>
+    <table>
+      <tr><th>Scenario</th><th>Return period</th><th>Depth at location</th><th>Risk class</th></tr>
+      ${['normal','moderate','extreme'].map(sc=>{
+        const ls=cd.scenarios[sc];
+        return `<tr><td>${SCENARIOS_DEF[sc].label}</td><td>${rp[sc]}</td>
+          <td style="font-weight:700;color:${RC[ls.risk]}">${ls.d>0?ls.d.toFixed(3)+'m':'0m'}</td>
+          <td style="color:${RC[ls.risk]}">${ls.risk.toUpperCase()}</td></tr>`;
+      }).join('')}
+    </table>
+    <div class="note">Terrain features: Elevation ${cd.elev.toFixed(1)}m · Slope ${cd.slope.toFixed(1)}° · TWI ${cd.twi.toFixed(2)} · Curvature ${cd.curv.toFixed(3)} · Relief ${cd.relief.toFixed(1)}m</div>
+  </section>`:'' ;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>FloodSense Report — ${now}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a2a;background:#fff;padding:0}
-    .page{max-width:800px;margin:0 auto;padding:40px}
-
-    /* Header bar */
-    .report-header{background:#0d3b6e;color:#fff;padding:24px 32px;margin-bottom:0}
-    .rh-title{font-size:22px;font-weight:700;margin-bottom:4px}
-    .rh-sub{font-size:13px;opacity:.8}
-    .rh-meta{font-size:12px;opacity:.7;margin-top:8px}
-
-    /* Alert level bar */
-    .alert-level-bar{padding:14px 32px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px}
-    .alb-none{background:#e8f4fd;color:#0d3b6e}
-    .alb-low{background:#e8f5e9;color:#1b5e20}
-    .alb-moderate{background:#fff8e1;color:#e65100}
-    .alb-high{background:#fbe9e7;color:#bf360c}
-    .alb-extreme{background:#ffebee;color:#b71c1c}
-
-    /* Sections */
-    .section{padding:24px 32px;border-bottom:1px solid #e0e8f4}
-    .section:last-child{border-bottom:none}
-    h2{font-size:15px;font-weight:700;color:#0d3b6e;margin-bottom:14px;text-transform:uppercase;letter-spacing:.04em}
-    h3{font-size:13px;font-weight:700;color:#333;margin:14px 0 8px}
-
-    /* Key numbers */
-    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-    .kpi{background:#f0f6ff;border:1px solid #c8daf4;border-radius:8px;padding:14px;text-align:center}
-    .kpi .val{font-size:26px;font-weight:800;color:#0d3b6e}
-    .kpi .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
-    .kpi .unit{font-size:11px;color:#888}
-
-    /* Alert boxes */
-    .alert-box{border-radius:8px;padding:14px 16px;margin-bottom:10px;border-left:4px solid}
-    .ab-extreme{background:#fff5f5;border-color:#b71c1c}
-    .ab-high{background:#fff8f5;border-color:#e65100}
-    .ab-medium{background:#fffbf0;border-color:#ff9800}
-    .ab-low{background:#f0f8ff;border-color:#1e90ff}
-    .ab-title{font-size:13px;font-weight:700;margin-bottom:5px}
-    .ab-extreme .ab-title{color:#b71c1c}
-    .ab-high .ab-title{color:#e65100}
-    .ab-medium .ab-title{color:#f57c00}
-    .ab-low .ab-title{color:#1565c0}
-    .ab-body{font-size:12px;color:#444;line-height:1.7}
-    .ab-stats{margin-top:8px}
-    .ab-stat{display:inline-block;background:#fff;border:1px solid #ddd;border-radius:4px;padding:2px 8px;font-size:11px;margin-right:5px;color:#555}
-
-    /* Timeline table */
-    table{width:100%;border-collapse:collapse;font-size:12px}
-    th{background:#0d3b6e;color:#fff;padding:8px 10px;text-align:left;font-weight:600}
-    td{padding:7px 10px;border-bottom:1px solid #e0e8f4}
-    tr:nth-child(even) td{background:#f7faff}
-    tr.peak td{background:#fff5f5;font-weight:600}
-
-    /* Action plan */
-    .action-box{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px 18px}
-    .action-box h3{color:#e65100;margin-top:0}
-    .action-list{list-style:none;padding:0}
-    .action-list li{padding:6px 0;border-bottom:1px solid #fff3cd;font-size:13px;display:flex;gap:8px}
-    .action-list li:last-child{border-bottom:none}
-    .action-list li::before{content:'→';color:#e65100;font-weight:700;flex-shrink:0}
-
-    /* Emergency contacts */
-    .contacts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .contact{background:#f0f6ff;border-radius:6px;padding:10px 12px;text-align:center}
-    .contact .num{font-size:20px;font-weight:800;color:#0d3b6e}
-    .contact .name{font-size:11px;color:#666;margin-top:2px}
-
-    .footer{background:#f4f6f9;padding:14px 32px;font-size:11px;color:#888;text-align:center}
-    @media print{body{padding:0}.page{padding:0}}
-  </style>
-  </head><body>
-
-  <div class="report-header">
-    <div class="rh-title">🌊 Flood Risk Alert Report — Tunisia</div>
-    <div class="rh-sub">Tunis Coastal Region · Scenario: <strong>${currentScenario.toUpperCase()}</strong></div>
-    <div class="rh-meta">Issued: ${now} at ${time} &nbsp;·&nbsp; Based on ${s.total_rain_mm}mm rainfall forecast &nbsp;·&nbsp; Return period: ${rp[currentScenario]||'—'}</div>
-  </div>
-
-  <div class="alert-level-bar alb-${computeAlertLevel(currentScenario)}">
-    ${ALERT_DEFS[computeAlertLevel(currentScenario)].icon}
-    ALERT LEVEL: ${ALERT_DEFS[computeAlertLevel(currentScenario)].title}
-  </div>
-
-  <div class="page">
-
-  <div class="section">
-    <h2>Situation overview</h2>
-    <div class="kpi-grid">
-      <div class="kpi"><div class="val">${s.flooded_area_km2||0}</div><div class="lbl">Area at risk</div><div class="unit">km²</div></div>
-      <div class="kpi"><div class="val">${s.flooded_pct||0}%</div><div class="lbl">Region affected</div><div class="unit">of study area</div></div>
-      <div class="kpi"><div class="val">${s.max_depth_m||0}m</div><div class="lbl">Max flood depth</div><div class="unit">metres</div></div>
-      <div class="kpi"><div class="val">${s.total_rain_mm||0}</div><div class="lbl">Rainfall forecast</div><div class="unit">mm total</div></div>
+    body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#1a1a2a;line-height:1.6}
+    .cover{background:#09090b;color:#fff;padding:32px 40px;display:flex;justify-content:space-between;align-items:flex-end}
+    .cover h1{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}
+    .cover .sub{font-size:12px;color:#71717a}
+    .cover .ts{font-size:10px;color:#52525b;text-align:right}
+    .alert-bar{padding:10px 40px;font-weight:700;font-size:12px;background:${alertColors[level]};color:${alertTextColors[level]};display:flex;gap:8px;align-items:center}
+    section{padding:20px 40px;border-bottom:1px solid #e4e4e7}
+    section:last-child{border-bottom:none}
+    h2{font-size:13px;font-weight:700;color:#09090b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+    h3{font-size:11px;font-weight:700;color:#3f3f46;margin:12px 0 6px}
+    .meta-row{font-size:10px;color:#71717a;font-family:monospace;margin-bottom:10px}
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+    .kpi{background:#f4f4f5;border-radius:6px;padding:10px 12px}
+    .kv{font-size:20px;font-weight:700;font-family:monospace;color:#09090b}
+    .kl{font-size:9px;color:#71717a;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+    table{width:100%;border-collapse:collapse;font-size:11px;margin:10px 0}
+    th{background:#09090b;color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+    td{padding:6px 10px;border-bottom:1px solid #e4e4e7}
+    tr:nth-child(even) td{background:#fafafa}
+    .note{font-size:10px;color:#71717a;font-family:monospace;margin-top:8px;padding:6px 8px;background:#f4f4f5;border-radius:4px}
+    .risk-zone{border-radius:6px;padding:10px 12px;margin-bottom:6px;border-left:4px solid}
+    .rz-extreme{background:#fff5f5;border-color:#ef4444}
+    .rz-high{background:#fff7ed;border-color:#f97316}
+    .rz-medium{background:#fffbeb;border-color:#f59e0b}
+    .rz-low{background:#eff6ff;border-color:#0ea5e9}
+    .rz-title{font-weight:700;margin-bottom:3px;font-size:11px}
+    .rz-extreme .rz-title{color:#dc2626}.rz-high .rz-title{color:#ea580c}
+    .rz-medium .rz-title{color:#d97706}.rz-low .rz-title{color:#0284c7}
+    ul{padding-left:14px;margin:6px 0}li{margin-bottom:3px}
+    .timeline-row{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin:10px 0}
+    .tr-cell{padding:5px 3px;border-radius:3px;text-align:center;font-size:8px;font-family:monospace;color:#fff;font-weight:600}
+    footer{background:#f4f4f5;padding:12px 40px;font-size:10px;color:#71717a;text-align:center}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>
+  <div class="cover">
+    <div>
+      <div style="font-size:11px;color:#38bdf8;font-weight:600;letter-spacing:.1em;margin-bottom:8px">FLOODSENSE · TUNISIA</div>
+      <h1>Flood Risk Analysis Report</h1>
+      <div class="sub">Scenario: <strong>${def.label.toUpperCase()}</strong> · ${def.rain}mm rainfall · +${def.sea}m sea level · ${rp[currentScenario]} return period</div>
     </div>
-    <p style="font-size:13px;color:#444;line-height:1.7">
-      A <strong>${currentScenario}</strong> rainfall event of <strong>${s.total_rain_mm}mm</strong> combined with a sea level rise of <strong>+${s.sea_level_rise_m}m</strong> is forecast for the Tunis coastal region.
-      This event has an estimated return period of <strong>${rp[currentScenario]||'—'}</strong>.
-      A total of <strong>${s.flooded_area_km2} km²</strong> (${s.flooded_pct}% of the study area) is projected to flood,
-      with water depths reaching up to <strong>${s.max_depth_m}m</strong> in the most severely affected zones.
-      An average depth of <strong>${s.mean_depth_m}m</strong> is expected across all flooded areas.
-    </p>
+    <div class="ts">${now}<br>${time}</div>
   </div>
+  <div class="alert-bar">⚠ ALERT LEVEL: ${level.toUpperCase()} — ${s.flooded_area_km2||0} km² at risk · max depth ${s.max_depth_m||0}m</div>
 
-  <div class="section">
-    <h2>Zone-by-zone flood alerts</h2>
-    ${(rc.extreme||0)>0?`<div class="alert-box ab-extreme">
-      <div class="ab-title">🆘 EXTREME RISK — ${rc.extreme} grid cells — ${(rc.extreme*PIXEL_KM2).toFixed(1)} km²</div>
-      <div class="ab-body">
-        Flood depth exceeding <strong>1.5 metres</strong>. These zones face life-threatening conditions. Flood water at this depth can overturn vehicles and collapse lightweight structures.
-        <br><strong>Immediate action:</strong> Complete evacuation required before flooding begins. Do not wait. Do not attempt to drive through these areas under any circumstances.
-      </div>
-      <div class="ab-stats"><span class="ab-stat">Depth &gt; 1.5m</span><span class="ab-stat">${(rc.extreme*PIXEL_KM2).toFixed(1)} km²</span><span class="ab-stat">${rc.extreme} grid cells</span></div>
-    </div>`:''}
-
-    ${(rc.high||0)>0?`<div class="alert-box ab-high">
-      <div class="ab-title">🚨 HIGH RISK — ${rc.high} grid cells — ${(rc.high*PIXEL_KM2).toFixed(1)} km²</div>
-      <div class="ab-body">
-        Flood depth between <strong>0.75 and 1.5 metres</strong>. Dangerous conditions for all pedestrians. Most vehicles will stall or be swept away. Ground floors of buildings at serious risk of inundation.
-        <br><strong>Action:</strong> Evacuate ground floor occupants. Move to upper floors or higher ground. Disconnect electrical appliances. Do not return until all-clear issued.
-      </div>
-      <div class="ab-stats"><span class="ab-stat">Depth 0.75–1.5m</span><span class="ab-stat">${(rc.high*PIXEL_KM2).toFixed(1)} km²</span><span class="ab-stat">${rc.high} grid cells</span></div>
-    </div>`:''}
-
-    ${(rc.medium||0)>0?`<div class="alert-box ab-medium">
-      <div class="ab-title">⚠️ MEDIUM RISK — ${rc.medium} grid cells — ${(rc.medium*PIXEL_KM2).toFixed(1)} km²</div>
-      <div class="ab-body">
-        Flood depth between <strong>0.25 and 0.75 metres</strong>. Roads likely impassable. Significant property damage expected. Risk to elderly and children.
-        <br><strong>Action:</strong> Avoid all travel in affected areas. Move valuables to upper floors. Monitor official emergency service broadcasts. Prepare to evacuate if depth rises.
-      </div>
-      <div class="ab-stats"><span class="ab-stat">Depth 0.25–0.75m</span><span class="ab-stat">${(rc.medium*PIXEL_KM2).toFixed(1)} km²</span><span class="ab-stat">${rc.medium} grid cells</span></div>
-    </div>`:''}
-
-    ${(rc.low||0)>0?`<div class="alert-box ab-low">
-      <div class="ab-title">ℹ️ LOW RISK — ${rc.low} grid cells — ${(rc.low*PIXEL_KM2).toFixed(1)} km²</div>
-      <div class="ab-body">
-        Minor flooding below <strong>0.25 metres</strong>. Nuisance flooding of low-lying areas, underpasses and drainage channels likely. Surface water on roads possible.
-        <br><strong>Action:</strong> Avoid walking near rivers and drainage channels. Drive carefully. Do not park in flood-prone underpasses.
-      </div>
-      <div class="ab-stats"><span class="ab-stat">Depth &lt; 0.25m</span><span class="ab-stat">${(rc.low*PIXEL_KM2).toFixed(1)} km²</span><span class="ab-stat">${rc.low} grid cells</span></div>
-    </div>`:''}
-  </div>
-
-  <div class="section">
-    <h2>12-hour flood timeline</h2>
+  <section>
+    <h2>Regional Summary</h2>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kv">${s.flooded_area_km2||0}</div><div class="kl">km² flooded</div></div>
+      <div class="kpi"><div class="kv">${s.flooded_pct||0}%</div><div class="kl">Region affected</div></div>
+      <div class="kpi"><div class="kv">${s.max_depth_m||0}m</div><div class="kl">Peak depth</div></div>
+      <div class="kpi"><div class="kv">${s.total_rain_mm||0}mm</div><div class="kl">Total rainfall</div></div>
+    </div>
     <table>
-      <tr><th>Hour</th><th>Phase</th><th>Sea level</th><th>Cumulative rain</th><th>Flooded area</th><th>Status</th></tr>
-      ${typeof ANIMATION_META!=='undefined'?ANIMATION_META.map(f=>`
-        <tr class="${f.hour===6?'peak':''}">
-          <td><strong>H+${f.hour}</strong></td>
-          <td style="color:${f.phase==='rising'?'#e65100':'#1565c0'}">${f.phase==='rising'?'↑ Rising':'↓ Receding'}</td>
-          <td>+${f.sea_level_m}m</td>
-          <td>${f.cumulative_rain_mm}mm</td>
-          <td>${f.flooded_km2} km²</td>
-          <td>${f.hour===6?'⚠️ PEAK FLOOD':f.flooded_km2>500?'High activity':'Moderate'}</td>
-        </tr>`).join(''):'<tr><td colspan="6">Timeline data not available</td></tr>'}
+      <tr><th>Risk class</th><th>Area (km²)</th><th>Grid cells</th><th>Depth range</th><th>Classification</th></tr>
+      ${(rc.extreme||0)>0?`<tr><td style="color:#ef4444;font-weight:700">EXTREME</td><td>${((rc.extreme||0)*PIXEL_KM2).toFixed(1)}</td><td>${rc.extreme||0}</td><td>> 1.5m</td><td>Life-threatening inundation</td></tr>`:''}
+      ${(rc.high||0)>0?`<tr><td style="color:#f97316;font-weight:700">HIGH</td><td>${((rc.high||0)*PIXEL_KM2).toFixed(1)}</td><td>${rc.high||0}</td><td>0.75–1.5m</td><td>Dangerous — evacuation required</td></tr>`:''}
+      ${(rc.medium||0)>0?`<tr><td style="color:#f59e0b;font-weight:700">MEDIUM</td><td>${((rc.medium||0)*PIXEL_KM2).toFixed(1)}</td><td>${rc.medium||0}</td><td>0.25–0.75m</td><td>Significant damage — avoid area</td></tr>`:''}
+      ${(rc.low||0)>0?`<tr><td style="color:#0ea5e9;font-weight:700">LOW</td><td>${((rc.low||0)*PIXEL_KM2).toFixed(1)}</td><td>${rc.low||0}</td><td>0.05–0.25m</td><td>Surface water — monitor</td></tr>`:''}
     </table>
-    <p style="font-size:11px;color:#888;margin-top:8px">Peak flood conditions expected at Hour 6. Sea level reaches maximum +1.20m. Row highlighted in red = peak.</p>
-  </div>
+  </section>
 
-  <div class="section">
-    <h2>Recommended actions</h2>
-    <div class="action-box">
-      <h3>⚡ Priority actions for ${currentScenario.toUpperCase()} scenario</h3>
-      <ul class="action-list">
-        ${currentScenario==='extreme'?`
-        <li>Activate Civil Protection emergency response protocol immediately</li>
-        <li>Issue public evacuation order for all zones within 1.5m elevation of sea level</li>
-        <li>Close all coastal roads and underpasses</li>
-        <li>Pre-position rescue teams at designated high-ground assembly points</li>
-        <li>Alert hospitals to prepare for potential casualties and power outages</li>
-        <li>Broadcast emergency alerts on all public channels</li>
-        `:currentScenario==='moderate'?`
-        <li>Issue flood advisory for coastal and low-lying zones</li>
-        <li>Close flood-prone roads and underpasses preventively</li>
-        <li>Alert municipality maintenance teams to clear drainage channels</li>
-        <li>Advise residents of low-lying areas to prepare emergency kits</li>
-        <li>Monitor rainfall and sea level every 30 minutes</li>
-        `:`
-        <li>No immediate action required</li>
-        <li>Routine monitoring of drainage systems</li>
-        <li>Standard weather watch in effect</li>
-        `}
-      </ul>
+  ${locSection}
+
+  <section>
+    <h2>12-Hour Storm Timeline</h2>
+    <div class="timeline-row">
+      ${typeof ANIMATION_META!=='undefined'?ANIMATION_META.map(f=>{
+        const pct=f.flooded_km2/Math.max(ANIMATION_META[6].flooded_km2,1);
+        const col=pct>0.8?'#ef4444':pct>0.5?'#f97316':pct>0.2?'#f59e0b':'#0ea5e9';
+        return `<div class="tr-cell" style="background:${col}">H+${f.hour}<br>${f.flooded_km2}</div>`;
+      }).join(''):''}
     </div>
-  </div>
+    <table>
+      <tr><th>Hour</th><th>Phase</th><th>Sea +m</th><th>Rain mm</th><th>Flooded km²</th><th>Max depth m</th></tr>
+      ${typeof ANIMATION_META!=='undefined'?ANIMATION_META.map(f=>`
+        <tr style="${f.hour===6?'background:#fff5f5;font-weight:600':''}">
+          <td>H+${f.hour}</td><td>${f.phase}</td><td>+${f.sea_level_m}</td>
+          <td>${f.cumulative_rain_mm}</td><td>${f.flooded_km2}</td><td>${f.max_depth_m}</td>
+        </tr>`).join(''):''}
+    </table>
+  </section>
 
-  <div class="section">
-    <h2>Emergency contacts</h2>
-    <div class="contacts">
-      <div class="contact"><div class="num">197</div><div class="name">Civil Protection</div></div>
-      <div class="contact"><div class="num">198</div><div class="name">Fire Brigade</div></div>
-      <div class="contact"><div class="num">190</div><div class="name">Police</div></div>
-    </div>
-  </div>
+  <section>
+    <h2>ML Model Summary</h2>
+    <p style="margin-bottom:10px">Random Forest Classifier · 100 trees · max_depth=12 · accuracy <strong>${((MODEL_DATA?.accuracy||0.963)*100).toFixed(1)}%</strong> · trained on 90,000 terrain pixels</p>
+    <table>
+      <tr><th>Feature</th><th>Importance</th><th>Role in prediction</th></tr>
+      ${MODEL_DATA?.feature_importances?Object.entries(MODEL_DATA.feature_importances).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+        <tr><td style="font-family:monospace">${k}</td><td style="font-weight:700">${(v*100).toFixed(1)}%</td>
+        <td>${{elevation:'Absolute land height above sea level',slope:'Terrain steepness — gradient affects drainage speed',twi:'Topographic Wetness Index — natural soil moisture retention',coast_dist:'Proximity to coastline — storm surge source',relief:'Local height variation — controls pooling extent',curvature:'Land concavity — primary pooling indicator'}[k]||k}</td></tr>`).join(''):''}
+    </table>
+  </section>
 
-  </div><!-- /page -->
-  <div class="footer">
-    Flood Risk Spatial Analysis Tool · Tunisia · ${now} · This report is generated automatically from flood modelling data and should be used alongside official meteorological forecasts.
-  </div>
+  <footer>FloodSense · Tunisia Flood Risk Platform · ${now} · Based on NASA SRTM DEM + Random Forest ML · For operational use verify with Tunisian Civil Protection</footer>
   </body></html>`;
 
-  const win=window.open('','_blank');
-  win.document.write(html);
-  win.document.close();
-  setTimeout(()=>win.print(),400);
+  const w=window.open('','_blank');
+  w.document.write(html); w.document.close();
+  setTimeout(()=>w.print(),400);
 }
 
-// ── INIT ─────────────────────────────────────────────
-buildFloodLayer(FLOOD_EXTREME);
+// ── INIT ───────────────────────────────────────────
+setScenario('extreme');
 buildMlLayer();
-updateStats('extreme');
-showAlerts('extreme');
-buildDepthChart();
-updateFeatImp();
-map.fitBounds([[36.6,10.0],[37.2,10.6]],{padding:[20,20]});
+map.fitBounds([[36.6,10.0],[37.2,10.6]],{padding:[50,50]});
 </script>
 </body>
 </html>
