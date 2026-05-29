@@ -211,7 +211,7 @@ header {
 .sc-depth { font-size: 12px; font-weight: 600; font-family: var(--mono); width: 38px; text-align: right; }
 .sc-risk-tag { font-size: 9px; font-family: var(--mono); width: 46px; text-align: right; }
 .sc-tooltip {
-  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%) translateY(4px);
+  position: absolute; bottom: calc(100% + 6px); left: 12px; transform: translateY(4px);
   background: #fafafa; color: #111; border-radius: var(--r);
   padding: 8px 12px; font-size: 11px; line-height: 1.6; white-space: normal;
   width: 240px; opacity: 0; pointer-events: none;
@@ -219,7 +219,7 @@ header {
   transition: opacity .15s, transform .15s;
 }
 .sc-tooltip::after {
-  content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  content: ''; position: absolute; top: 100%; left: 16px;
   border: 5px solid transparent; border-top-color: #fafafa;
 }
 .sc-tooltip-title { font-weight: 700; margin-bottom: 3px; font-size: 11px; }
@@ -317,50 +317,6 @@ header {
   gap: 6px; transition: background .15s; margin-bottom: 2px;
 }
 .report-btn:hover { background: #7dd3fc; }
-
-/* ── CUSTOM INPUT FORM ────────────────────────────── */
-.custom-form {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: var(--r); overflow: hidden; margin-bottom: 14px;
-}
-.custom-form-header {
-  padding: 9px 12px; border-bottom: 1px solid var(--border);
-  font-size: 10px; font-weight: 600; color: var(--sub);
-  text-transform: uppercase; letter-spacing: .07em;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.custom-form-body { padding: 11px 12px; display: flex; flex-direction: column; gap: 8px; }
-.field-row { display: flex; flex-direction: column; gap: 3px; }
-.field-label { font-size: 10px; color: var(--muted); font-weight: 500; }
-.field-desc { font-size: 9px; color: var(--border2); font-style: italic; margin-bottom: 1px; }
-.field-input-wrap { display: flex; align-items: center; gap: 6px; }
-.field-input {
-  flex: 1; height: 32px; background: var(--bg);
-  border: 1px solid var(--border); border-radius: 6px;
-  color: var(--text); font-family: var(--mono); font-size: 12px;
-  padding: 0 10px; outline: none; transition: border-color .15s;
-}
-.field-input:focus { border-color: var(--accent); }
-.field-unit { font-size: 10px; color: var(--muted); font-family: var(--mono); width: 28px; flex-shrink: 0; }
-.field-range {
-  -webkit-appearance: none; width: 100%; height: 3px;
-  background: var(--border); border-radius: 2px; outline: none;
-  accent-color: var(--accent);
-}
-.custom-run-btn {
-  width: 100%; height: 32px; background: var(--panel);
-  border: 1px solid var(--border2); border-radius: 6px;
-  color: var(--text); font-family: var(--font); font-size: 11px;
-  font-weight: 600; cursor: pointer; transition: all .15s;
-  display: flex; align-items: center; justify-content: center; gap: 5px;
-}
-.custom-run-btn:hover { background: #222226; border-color: var(--accent); color: var(--accent); }
-.custom-result {
-  margin-top: 8px; padding: 8px 10px; background: var(--bg);
-  border: 1px solid var(--border); border-radius: 6px;
-  font-size: 10px; line-height: 1.6; display: none;
-}
-.custom-result.show { display: block; }
 
 /* ── ALERTS PANEL ─────────────────────────────────── */
 #alerts-panel {
@@ -466,7 +422,7 @@ header {
   </div>
 
   <div class="header-right">
-    <div id="scenario-badge" class="scenario-badge" style="background:#2a0a0a;color:#ef4444;border:1px solid #5a1818">EXTREME · 176mm</div>
+
     <button class="hbtn" id="alerts-btn" onclick="toggleAlerts()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
       Alerts
@@ -481,19 +437,8 @@ header {
 
 <div class="main">
   <div style="position:relative;flex:1;display:flex;flex-direction:column">
-    <!-- SCENARIO STATUS BAR -->
-    <div class="scenario-header" id="sc-bar">
-      <span class="sh-label" id="sh-name">EXTREME</span>
-      <span class="sh-sep">·</span>
-      <span class="sh-stat"><span class="sh-stat-val" id="sh-rain">176</span><span>&nbsp;mm rainfall</span></span>
-      <span class="sh-sep">·</span>
-      <span class="sh-stat"><span class="sh-stat-val" id="sh-sea">+1.2</span><span>&nbsp;m sea rise</span></span>
-      <span class="sh-sep">·</span>
-      <span class="sh-stat"><span class="sh-stat-val" id="sh-area">—</span><span>&nbsp;km² flooded</span></span>
-      <span class="sh-sep">·</span>
-      <span class="sh-stat">Max <span class="sh-stat-val" id="sh-depth">—</span><span>&nbsp;m</span></span>
-    </div>
-    <div id="map" style="flex:1;margin-top:38px"></div>
+
+    <div id="map" style="flex:1"></div>
   </div>
 
   <!-- RIGHT PANEL -->
@@ -533,7 +478,7 @@ header {
 // ── CONSTANTS ──────────────────────────────────────
 const RC = { none:'#52525b', low:'#0ea5e9', medium:'#f59e0b', high:'#f97316', extreme:'#ef4444' };
 const RL = { none:'No Risk', low:'Low', medium:'Medium', high:'High', extreme:'Extreme' };
-const PIXEL_KM2 = 0.049;
+const PIXEL_KM2 = 0.00095;
 const SCENARIOS_DEF = {
   normal:   { rain:2,   sea:0.0, label:'Normal',   rp:'< 2 years',   color:'#22c55e' },
   moderate: { rain:55.5,sea:0.3, label:'Moderate',  rp:'~10 years',   color:'#f59e0b' },
@@ -617,7 +562,7 @@ function predictML(r, c){
 }
 
 // Full location analysis
-function analyzeLocation(lat,lon,customRain=null,customSea=null){
+function analyzeLocation(lat,lon){
   if(!inBounds(lat,lon)) return null;
   const{r,c}=latLonToRC(lat,lon);
   const elev=GRID_DATA.dem[r][c];
@@ -630,19 +575,11 @@ function analyzeLocation(lat,lon,customRain=null,customSea=null){
   const fm=GRID_DATA.flood_moderate[r][c];
   const fe=GRID_DATA.flood_extreme[r][c];
 
-  // Custom scenario interpolation
-  let customDepth=null;
-  if(customRain!==null){
-    const t=Math.min(1,Math.max(0,(customRain-2)/(176-2)));
-    const seaT=Math.min(1,Math.max(0,(customSea-0)/(1.2-0)));
-    customDepth=fn*(1-t)+fe*t+(fe*seaT*0.3);
-  }
-
   const ml=predictML(r,c);
 
   return{
     lat,lon,elev,slope,twi,relief,curv,
-    fn,fm,fe,customDepth,
+    fn,fm,fe,
     ml,
     scenarios:{
       normal:{d:fn,risk:depthToRisk(fn)},
@@ -709,11 +646,11 @@ function showPanel(lat,lon,cityName){
   })}).addTo(map);
 
   currentLat=lat; currentLon=lon; currentCityName=cityName||null;
-  renderPanel(lat,lon,cityName,null,null);
+  renderPanel(lat,lon,cityName);
 }
 
-function renderPanel(lat,lon,cityName,customRain,customSea){
-  const data=analyzeLocation(lat,lon,customRain,customSea);
+function renderPanel(lat,lon,cityName){
+  const data=analyzeLocation(lat,lon);
   document.getElementById('panel-empty').style.display='none';
   const pc=document.getElementById('panel-content');
   pc.style.display='flex';
@@ -772,16 +709,7 @@ function renderPanel(lat,lon,cityName,customRain,customSea){
         <div class="kpi-value">${d.elev.toFixed(1)}</div>
         <div class="kpi-unit">m asl</div>
       </div>
-      <div class="kpi">
-        <div class="kpi-label">ML risk class</div>
-        <div class="kpi-value" style="color:${RC[d.ml.name]};font-size:14px">${d.ml.name.toUpperCase()}</div>
-        <div class="kpi-unit">Random Forest · 96.3% acc.</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">High-risk P(X)</div>
-        <div class="kpi-value">${(d.ml.highProb*100).toFixed(0)}</div>
-        <div class="kpi-unit">percent</div>
-      </div>
+
     </div>
 
     <!-- SCENARIOS -->
@@ -804,46 +732,6 @@ function renderPanel(lat,lon,cityName,customRain,customSea){
           </div>
         </div>`;
       }).join('')}
-      ${d.customDepth!==null?`<div class="sc-row" style="border-left:2px solid #7c3aed44">
-        <div class="sc-dot" style="background:#7c3aed"></div>
-        <div class="sc-name" style="color:#a78bfa">Custom</div>
-        <div class="sc-bar-bg"><div class="sc-bar" style="width:${Math.min(d.customDepth/maxDepth*100,100)}%;background:${RC[depthToRisk(d.customDepth)]}"></div></div>
-        <div class="sc-depth" style="color:${RC[depthToRisk(d.customDepth)]}">${d.customDepth>0?d.customDepth.toFixed(2)+'m':'—'}</div>
-        <div class="sc-risk-tag" style="color:${RC[depthToRisk(d.customDepth)]}">${RL[depthToRisk(d.customDepth)]}</div>
-      </div>`:''}
-    </div>
-
-    <!-- ML BLOCK -->
-    <div class="sec-label">ML prediction</div>
-    <div class="ml-block">
-      <div class="ml-header">
-        <div class="ml-title">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0112 4.5v15a2.5 2.5 0 01-5 0v-15A2.5 2.5 0 019.5 2z"/><path d="M14.5 8A2.5 2.5 0 0117 10.5v9a2.5 2.5 0 01-5 0v-9A2.5 2.5 0 0114.5 8z"/></svg>
-          Random Forest
-        </div>
-        <div class="ml-chip" style="color:${RC[d.ml.name]};border-color:${RC[d.ml.name]}44">${d.ml.name}</div>
-      </div>
-      ${[
-        ['Elevation',d.elev,0,160,'#38bdf8'],
-        ['Curvature',Math.abs(d.curv),0,20,'#ef4444'],
-        ['Slope',d.slope,0,8,'#f59e0b'],
-        ['TWI',d.twi,0,15,'#0ea5e9'],
-      ].map(([name,val,mn,mx,col])=>{
-        const pct=Math.max(0,Math.min(100,(val-mn)/(mx-mn)*100));
-        const disp=name==='Curvature'?(d.curv>0?'+':'')+d.curv.toFixed(2):
-                  name==='Elevation'?d.elev.toFixed(0)+'m':
-                  name==='Slope'?d.slope.toFixed(1)+'°':d.twi.toFixed(1);
-        return `<div class="ml-feat-row">
-          <div class="ml-feat-label">${name}</div>
-          <div class="ml-feat-bg"><div class="ml-feat-fill" style="width:${pct}%;background:${col}"></div></div>
-          <div class="ml-feat-val" style="color:${col}">${disp}</div>
-        </div>`;
-      }).join('')}
-      <div class="ml-prob-row">
-        <div class="ml-prob-label">P(high|extreme)</div>
-        <div class="ml-prob-bg"><div class="ml-prob-fill" style="width:${(d.ml.highProb*100).toFixed(0)}%;background:${wc}"></div></div>
-        <div class="ml-prob-pct" style="color:${wc}">${(d.ml.highProb*100).toFixed(0)}%</div>
-      </div>
     </div>
 
     <!-- ANIMATION -->
@@ -871,55 +759,6 @@ function renderPanel(lat,lon,cityName,customRain,customSea){
         <canvas id="loc-chart"></canvas>
         <span class="chart-expand-hint">↕ hover to expand</span>
       </div>
-    </div>
-
-    <!-- CUSTOM SIMULATION -->
-    <div class="sec-label">Custom scenario</div>
-    <div class="custom-form">
-      <div class="custom-form-header">
-        <span>Parameters</span>
-        <span style="color:#52525b;font-size:9px;font-weight:400">Enter values and run</span>
-      </div>
-      <div class="custom-form-body">
-        <div class="field-row">
-          <div class="field-label">Rainfall intensity</div>
-          <div class="field-desc">Total precipitation for the storm event</div>
-          <div class="field-input-wrap">
-            <input class="field-input" type="number" id="cf-rain" min="0" max="500" step="0.1" placeholder="e.g. 80" oninput="document.getElementById('cf-rain-sl').value=this.value">
-            <span class="field-unit">mm</span>
-          </div>
-          <input class="field-range" type="range" id="cf-rain-sl" min="0" max="300" step="1" value="80" oninput="document.getElementById('cf-rain').value=this.value">
-        </div>
-        <div class="field-row">
-          <div class="field-label">Sea level anomaly</div>
-          <div class="field-desc">Storm surge / sea level rise above mean</div>
-          <div class="field-input-wrap">
-            <input class="field-input" type="number" id="cf-sea" min="0" max="3" step="0.01" placeholder="e.g. 0.5" oninput="document.getElementById('cf-sea-sl').value=this.value*100">
-            <span class="field-unit">m</span>
-          </div>
-          <input class="field-range" type="range" id="cf-sea-sl" min="0" max="300" step="1" value="50" oninput="document.getElementById('cf-sea').value=(this.value/100).toFixed(2)">
-        </div>
-        <div class="field-row">
-          <div class="field-label">Duration</div>
-          <div class="field-desc">Storm event duration (informational only)</div>
-          <div class="field-input-wrap">
-            <input class="field-input" type="number" id="cf-dur" min="1" max="72" step="1" placeholder="e.g. 24">
-            <span class="field-unit">h</span>
-          </div>
-        </div>
-        <button class="custom-run-btn" onclick="runCustom()">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
-          Run simulation
-        </button>
-        <div class="custom-result" id="custom-result"></div>
-      </div>
-    </div>
-
-    <!-- ACTION -->
-    <div class="sec-label">Recommended action</div>
-    <div class="action-block ${wr}">
-      <div class="action-title" style="color:${wc}">${{none:'✅ No action required',low:'ℹ️ Monitor',medium:'⚠️ Precautionary measures',high:'🚨 Evacuation advisory',extreme:'🆘 Emergency evacuation'}[wr]}</div>
-      ${buildActions(wr,d)}
     </div>
 
     <button class="report-btn" onclick="exportReport()">
@@ -1035,28 +874,6 @@ function buildLocChart(depths){
   });
 }
 
-// ── CUSTOM SCENARIO ────────────────────────────────
-function runCustom(){
-  const rain=parseFloat(document.getElementById('cf-rain').value);
-  const sea=parseFloat(document.getElementById('cf-sea').value);
-  if(isNaN(rain)||isNaN(sea)){
-    alert('Please enter both rainfall (mm) and sea level anomaly (m).');
-    return;
-  }
-  if(!currentLat){return;}
-  renderPanel(currentLat,currentLon,currentCityName,rain,sea);
-  const res=document.getElementById('custom-result');
-  if(res){
-    const data=analyzeLocation(currentLat,currentLon,rain,sea);
-    if(data&&data.customDepth!==null){
-      const r=depthToRisk(data.customDepth);
-      res.style.color=RC[r];
-      res.innerHTML=`<strong>Custom result:</strong> Rain=${rain}mm · Sea+${sea}m → Depth <strong>${data.customDepth.toFixed(3)}m</strong> [${RL[r]}]`;
-      res.classList.add('show');
-    }
-  }
-}
-
 function closePanel(){
   document.getElementById('panel-empty').style.display='flex';
   document.getElementById('panel-content').style.display='none';
@@ -1073,20 +890,8 @@ const SCENARIO_DATA={
   extreme:{geojson:FLOOD_EXTREME,stats:ANALYSIS.scenarios.extreme},
 };
 
-// Called from header scenario badge (not visible — controlled via alerts)
 function setScenario(name){
   currentScenario=name;
-  const def=SCENARIOS_DEF[name];
-  const s=SCENARIO_DATA[name].stats||{};
-  document.getElementById('sh-name').textContent=def.label.toUpperCase();
-  document.getElementById('sh-rain').textContent=def.rain;
-  document.getElementById('sh-sea').textContent='+'+def.sea;
-  document.getElementById('sh-area').textContent=s.flooded_area_km2||'—';
-  document.getElementById('sh-depth').textContent=s.max_depth_m||'—';
-  document.getElementById('scenario-badge').textContent=`${def.label.toUpperCase()} · ${def.rain}mm`;
-  document.getElementById('scenario-badge').style.background=name==='extreme'?'#2a0a0a':name==='moderate'?'#1c1200':'#0a1c08';
-  document.getElementById('scenario-badge').style.color=def.color;
-  document.getElementById('scenario-badge').style.borderColor=def.color+'44';
   buildFloodLayer(SCENARIO_DATA[name].geojson);
   buildAlerts(name);
 }
@@ -1188,6 +993,20 @@ function exportReport(){
   const alertColors={none:'#e8f4fd',low:'#e8f5e9',moderate:'#fff8e1',high:'#fbe9e7',extreme:'#ffebee'};
   const alertTextColors={none:'#0d3b6e',low:'#1b5e20',moderate:'#e65100',high:'#bf360c',extreme:'#b71c1c'};
 
+  const ttip=SCENARIO_TOOLTIPS[currentScenario];
+
+  const scenarioDesc=cd ? ['normal','moderate','extreme'].map(sc=>{
+    const ls=cd.scenarios[sc];
+    const def2=SCENARIOS_DEF[sc];
+    const tt2=SCENARIO_TOOLTIPS[sc];
+    const riskIcon={none:'',low:'Surface water',medium:'Significant flooding',high:'Dangerous flooding',extreme:'Critical flooding'};
+    return `<div class="rz-${ls.risk}">
+      <div class="rz-title">${def2.label} (${rp[sc]}) — ${ls.risk.toUpperCase()}</div>
+      <div class="rz-body">Depth at location: <strong>${ls.d>0?ls.d.toFixed(3)+'m':'0m (no flood)'}</strong> · Regional flooded: ${ANALYSIS.scenarios[sc].flooded_area_km2} km²</div>
+      <div class="rz-desc">${tt2.desc}</div>
+    </div>`;
+  }).join(''):'';
+
   const locSection=cd?`
   <section>
     <h2>Location Analysis — ${currentCityName||`${parseFloat(currentLat).toFixed(4)}°N, ${parseFloat(currentLon).toFixed(4)}°E`}</h2>
@@ -1195,26 +1014,35 @@ function exportReport(){
     <div class="kpi-row">
       <div class="kpi"><div class="kv" style="color:${RC[cd.worst]}">${cd.fe.toFixed(2)}m</div><div class="kl">Max depth (extreme)</div></div>
       <div class="kpi"><div class="kv">${cd.elev.toFixed(1)}m</div><div class="kl">Elevation asl</div></div>
-      <div class="kpi"><div class="kv" style="color:${RC[cd.ml.name]}">${cd.ml.name.toUpperCase()}</div><div class="kl">ML risk class</div></div>
-      <div class="kpi"><div class="kv">${(cd.ml.highProb*100).toFixed(0)}%</div><div class="kl">P(high|extreme)</div></div>
     </div>
-    <table>
-      <tr><th>Scenario</th><th>Return period</th><th>Depth at location</th><th>Risk class</th></tr>
-      ${['normal','moderate','extreme'].map(sc=>{
-        const ls=cd.scenarios[sc];
-        return `<tr><td>${SCENARIOS_DEF[sc].label}</td><td>${rp[sc]}</td>
-          <td style="font-weight:700;color:${RC[ls.risk]}">${ls.d>0?ls.d.toFixed(3)+'m':'0m'}</td>
-          <td style="color:${RC[ls.risk]}">${ls.risk.toUpperCase()}</td></tr>`;
-      }).join('')}
-    </table>
-    <div class="note">Terrain features: Elevation ${cd.elev.toFixed(1)}m · Slope ${cd.slope.toFixed(1)}° · TWI ${cd.twi.toFixed(2)} · Curvature ${cd.curv.toFixed(3)} · Relief ${cd.relief.toFixed(1)}m</div>
+
+    <h3>Terrain characteristics at this location</h3>
+    <div class="terrain-grid">
+      <div class="tg-item"><div class="tg-val">${cd.slope.toFixed(1)}°</div><div class="tg-lab">Slope</div><div class="tg-desc">Steepness affects runoff speed — steeper terrain drains faster</div></div>
+      <div class="tg-item"><div class="tg-val">${cd.twi.toFixed(1)}</div><div class="tg-lab">TWI</div><div class="tg-desc">Topographic Wetness Index — higher values indicate natural water accumulation</div></div>
+      <div class="tg-item"><div class="tg-val">${cd.curv.toFixed(2)}</div><div class="tg-lab">Curvature</div><div class="tg-desc">Negative = concave (water pools) · Positive = convex (water sheds)</div></div>
+      <div class="tg-item"><div class="tg-val">${cd.relief.toFixed(1)}m</div><div class="tg-lab">Relief</div><div class="tg-desc">Local height variation — low relief means flat terrain prone to ponding</div></div>
+    </div>
+
+    <h3>Flood depth by scenario</h3>
+    <div class="scenario-desc">${scenarioDesc}</div>
   </section>`:'' ;
+
+  const chartId='depthChart_'+Date.now();
+  const animDepthsLocal=cd && typeof ANIMATION_META!=='undefined' ? ANIMATION_META.map(m=>{
+    const sf=m.flooded_km2/Math.max(ANIMATION_META[6].flooded_km2,1);
+    return parseFloat((cd.fe*sf).toFixed(3));
+  }):[];
+
+  const S = '<'+'script';
+  const ES = '<'+'/script';
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>FloodSense Report — ${now}</title>
+  ${S} src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js">${ES}>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#1a1a2a;line-height:1.6}
+    body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#1a1a2a;line-height:1.6;background:#fff}
     .cover{background:#09090b;color:#fff;padding:32px 40px;display:flex;justify-content:space-between;align-items:flex-end}
     .cover h1{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}
     .cover .sub{font-size:12px;color:#71717a}
@@ -1224,7 +1052,6 @@ function exportReport(){
     section:last-child{border-bottom:none}
     h2{font-size:13px;font-weight:700;color:#09090b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
     h3{font-size:11px;font-weight:700;color:#3f3f46;margin:12px 0 6px}
-    .meta-row{font-size:10px;color:#71717a;font-family:monospace;margin-bottom:10px}
     .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
     .kpi{background:#f4f4f5;border-radius:6px;padding:10px 12px}
     .kv{font-size:20px;font-weight:700;font-family:monospace;color:#09090b}
@@ -1233,18 +1060,30 @@ function exportReport(){
     th{background:#09090b;color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.04em;text-transform:uppercase}
     td{padding:6px 10px;border-bottom:1px solid #e4e4e7}
     tr:nth-child(even) td{background:#fafafa}
-    .note{font-size:10px;color:#71717a;font-family:monospace;margin-top:8px;padding:6px 8px;background:#f4f4f5;border-radius:4px}
-    .risk-zone{border-radius:6px;padding:10px 12px;margin-bottom:6px;border-left:4px solid}
+    .terrain-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+    .tg-item{background:#f4f4f5;border-radius:6px;padding:10px;text-align:center}
+    .tg-val{font-size:16px;font-weight:700;font-family:monospace}
+    .tg-lab{font-size:9px;color:#52525b;text-transform:uppercase;letter-spacing:.04em;margin:2px 0}
+    .tg-desc{font-size:9px;color:#71717a;line-height:1.4}
+    .scenario-desc{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+    .rz-extreme,.rz-high,.rz-medium,.rz-low,.rz-none{border-radius:6px;padding:10px 12px;border-left:4px solid}
     .rz-extreme{background:#fff5f5;border-color:#ef4444}
     .rz-high{background:#fff7ed;border-color:#f97316}
     .rz-medium{background:#fffbeb;border-color:#f59e0b}
     .rz-low{background:#eff6ff;border-color:#0ea5e9}
+    .rz-none{background:#f4f4f5;border-color:#a1a1aa}
     .rz-title{font-weight:700;margin-bottom:3px;font-size:11px}
     .rz-extreme .rz-title{color:#dc2626}.rz-high .rz-title{color:#ea580c}
     .rz-medium .rz-title{color:#d97706}.rz-low .rz-title{color:#0284c7}
-    ul{padding-left:14px;margin:6px 0}li{margin-bottom:3px}
-    .timeline-row{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin:10px 0}
-    .tr-cell{padding:5px 3px;border-radius:3px;text-align:center;font-size:8px;font-family:monospace;color:#fff;font-weight:600}
+    .rz-body{font-size:10px;color:#3f3f46;margin-bottom:4px}
+    .rz-desc{font-size:10px;color:#71717a;line-height:1.5}
+    .method-box{background:#f4f4f5;border-radius:6px;padding:12px;margin:10px 0}
+    .method-box p{font-size:10px;color:#3f3f46;margin-bottom:6px;line-height:1.6}
+    .method-box p:last-child{margin-bottom:0}
+    .chart-wrap{width:100%;height:260px;margin:12px 0}
+    .feat-table td:first-child{font-family:monospace;white-space:nowrap}
+    .feat-table td:nth-child(2){font-size:10px;color:#3f3f46}
+    .feat-table td:last-child{font-size:10px;color:#71717a}
     footer{background:#f4f4f5;padding:12px 40px;font-size:10px;color:#71717a;text-align:center}
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style></head><body>
@@ -1259,60 +1098,110 @@ function exportReport(){
   <div class="alert-bar">⚠ ALERT LEVEL: ${level.toUpperCase()} — ${s.flooded_area_km2||0} km² at risk · max depth ${s.max_depth_m||0}m</div>
 
   <section>
-    <h2>Regional Summary</h2>
+    <h2>Simulation overview</h2>
+    <p style="font-size:10px;color:#3f3f46;margin-bottom:8px;line-height:1.6">${ttip.desc}</p>
     <div class="kpi-row">
       <div class="kpi"><div class="kv">${s.flooded_area_km2||0}</div><div class="kl">km² flooded</div></div>
       <div class="kpi"><div class="kv">${s.flooded_pct||0}%</div><div class="kl">Region affected</div></div>
       <div class="kpi"><div class="kv">${s.max_depth_m||0}m</div><div class="kl">Peak depth</div></div>
-      <div class="kpi"><div class="kv">${s.total_rain_mm||0}mm</div><div class="kl">Total rainfall</div></div>
+      <div class="kpi"><div class="kv">${s.mean_depth_m||0}m</div><div class="kl">Mean depth</div></div>
     </div>
     <table>
-      <tr><th>Risk class</th><th>Area (km²)</th><th>Grid cells</th><th>Depth range</th><th>Classification</th></tr>
-      ${(rc.extreme||0)>0?`<tr><td style="color:#ef4444;font-weight:700">EXTREME</td><td>${((rc.extreme||0)*PIXEL_KM2).toFixed(1)}</td><td>${rc.extreme||0}</td><td>> 1.5m</td><td>Life-threatening inundation</td></tr>`:''}
-      ${(rc.high||0)>0?`<tr><td style="color:#f97316;font-weight:700">HIGH</td><td>${((rc.high||0)*PIXEL_KM2).toFixed(1)}</td><td>${rc.high||0}</td><td>0.75–1.5m</td><td>Dangerous — evacuation required</td></tr>`:''}
-      ${(rc.medium||0)>0?`<tr><td style="color:#f59e0b;font-weight:700">MEDIUM</td><td>${((rc.medium||0)*PIXEL_KM2).toFixed(1)}</td><td>${rc.medium||0}</td><td>0.25–0.75m</td><td>Significant damage — avoid area</td></tr>`:''}
-      ${(rc.low||0)>0?`<tr><td style="color:#0ea5e9;font-weight:700">LOW</td><td>${((rc.low||0)*PIXEL_KM2).toFixed(1)}</td><td>${rc.low||0}</td><td>0.05–0.25m</td><td>Surface water — monitor</td></tr>`:''}
+      <tr><th>Risk class</th><th>Area (km²)</th><th>Grid cells</th><th>Depth range</th><th>Impact</th></tr>
+      ${[{k:'extreme',c:'#ef4444',l:'Life-threatening — immediate evacuation'},{k:'high',c:'#f97316',l:'Dangerous — evacuation required'},{k:'medium',c:'#f59e0b',l:'Property damage — avoid area'},{k:'low',c:'#0ea5e9',l:'Surface water— monitor conditions'}].map(({k,c,l})=>(rc[k]||0)>0?`
+        <tr><td style="color:${c};font-weight:700">${k.toUpperCase()}</td>
+        <td>${((rc[k]||0)*PIXEL_KM2).toFixed(1)}</td>
+        <td>${rc[k]||0}</td>
+        <td>${k==='extreme'?'> 1.5m':k==='high'?'0.75–1.5m':k==='medium'?'0.25–0.75m':'0.05–0.25m'}</td>
+        <td>${l}</td></tr>`:'').join('')}
     </table>
+  </section>
+
+  <section>
+    <h2>Simulation methodology</h2>
+    <div class="method-box">
+      <p><strong>SCS Curve Number runoff model</strong> — Converts total rainfall (${def.rain}mm) into surface runoff using the USDA Soil Conservation Service method. A Curve Number grid (50–92) is derived from land cover. Higher CN values (urban areas) generate more runoff; lower values (forest, agriculture) allow more infiltration.</p>
+      <p><strong>Coastal bathtub inundation</strong> — Terrain connected to the coastline and below the water level (sea level rise + storm surge = +${def.sea}m) is classified as flooded. A binary dilation algorithm ensures only hydrologically connected low-lying areas are included.</p>
+      <p><strong>Combined flood depth</strong> — The final depth is the sum of: coastal surge overflow, depression pooling from runoff, and river channel overflow. Three scenarios span the full range from benign to catastrophic.</p>
+    </div>
   </section>
 
   ${locSection}
 
+  ${animDepthsLocal.length>0?`
   <section>
-    <h2>12-Hour Storm Timeline</h2>
-    <div class="timeline-row">
-      ${typeof ANIMATION_META!=='undefined'?ANIMATION_META.map(f=>{
-        const pct=f.flooded_km2/Math.max(ANIMATION_META[6].flooded_km2,1);
-        const col=pct>0.8?'#ef4444':pct>0.5?'#f97316':pct>0.2?'#f59e0b':'#0ea5e9';
-        return `<div class="tr-cell" style="background:${col}">H+${f.hour}<br>${f.flooded_km2}</div>`;
-      }).join(''):''}
+    <h2>Depth projection over storm timeline</h2>
+    <p style="font-size:10px;color:#71717a;margin-bottom:8px">Simulated flood depth at the analysed location over 12 hours of the extreme storm event, inferred from regional flooding extent at each hour.</p>
+    <div class="chart-wrap">
+      <canvas id="${chartId}"></canvas>
     </div>
-    <table>
-      <tr><th>Hour</th><th>Phase</th><th>Sea +m</th><th>Rain mm</th><th>Flooded km²</th><th>Max depth m</th></tr>
-      ${typeof ANIMATION_META!=='undefined'?ANIMATION_META.map(f=>`
-        <tr style="${f.hour===6?'background:#fff5f5;font-weight:600':''}">
-          <td>H+${f.hour}</td><td>${f.phase}</td><td>+${f.sea_level_m}</td>
-          <td>${f.cumulative_rain_mm}</td><td>${f.flooded_km2}</td><td>${f.max_depth_m}</td>
-        </tr>`).join(''):''}
+    ${S}>
+      new Chart(document.getElementById('${chartId}'),{
+        type:'line',
+        data:{
+          labels:${JSON.stringify(animDepthsLocal.map((_,i)=>'H+'+i))},
+          datasets:[{
+            label:'Depth at location',
+            data:${JSON.stringify(animDepthsLocal)},
+            borderColor:'#38bdf8',borderWidth:2.5,
+            fill:true,backgroundColor:'rgba(56,189,248,.1)',
+            tension:.4,pointRadius:4,pointBackgroundColor:'#38bdf8',
+            pointHoverRadius:7
+          }]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              backgroundColor:'#18181b',titleColor:'#fafafa',bodyColor:'#a1a1aa',
+              padding:10,
+              callbacks:{
+                title:ctx=>'Hour +'+ctx[0].dataIndex,
+                label:ctx=>{const d=ctx.raw;const r=d>1.5?'EXTREME':d>0.75?'HIGH':d>0.25?'MEDIUM':d>0.05?'LOW':'NONE';return'Depth: '+d.toFixed(3)+'m  ['+r+']';}
+              }
+            }
+          },
+          scales:{
+            x:{title:{display:true,text:'Time (hours)',color:'#71717a',font:{size:10}}},
+            y:{min:0,title:{display:true,text:'Depth (m)',color:'#71717a',font:{size:10}}}
+          }
+        }
+      });
+    ${ES}>
+  </section>`:''}
+
+  <section>
+    <h2>Terrain & static data</h2>
+    <p style="font-size:10px;color:#3f3f46;margin-bottom:10px;line-height:1.6">The analysis uses a Digital Elevation Model (DEM) from NASA SRTM at 30m resolution covering the Tunis coastal region (36.0°N–37.5°N, 9.5°E–11.2°E). Six terrain features are extracted per pixel:</p>
+    <table class="feat-table">
+      <tr><th>Feature</th><th>Description</th><th>Flood relevance</th></tr>
+      <tr><td>Elevation</td><td>Absolute height above sea level (m)</td><td>Primary control — lower areas are more likely to be inundated</td></tr>
+      <tr><td>Slope</td><td>Terrain steepness (degrees)</td><td>Steep slopes drain rapidly; flat areas retain water</td></tr>
+      <tr><td>TWI</td><td>Topographic Wetness Index ln(a/tanβ)</td><td>Quantifies natural soil moisture — high = wet, poorly drained</td></tr>
+      <tr><td>Coast distance</td><td>Proximity to coastline (° longitude)</td><td>Measures exposure to storm surge — the primary flood source for Tunis</td></tr>
+      <tr><td>Relief</td><td>Local elevation range (m) in 20-pixel neighbourhood</td><td>Flat terrain (low relief) promotes ponding; varied terrain channels water</td></tr>
+      <tr><td>Curvature</td><td>Land surface concavity (negative = concave)</td><td>Concave terrain concentrates water — the strongest predictor of flood risk</td></tr>
     </table>
   </section>
 
   <section>
-    <h2>ML Model Summary</h2>
-    <p style="margin-bottom:10px">Random Forest Classifier · 100 trees · max_depth=12 · accuracy <strong>${((MODEL_DATA?.accuracy||0.963)*100).toFixed(1)}%</strong> · trained on 90,000 terrain pixels</p>
+    <h2>ML Model — Random Forest classifier</h2>
+    <p style="font-size:10px;color:#3f3f46;margin-bottom:10px;line-height:1.6">Random Forest Classifier · 100 trees · max_depth=12 · accuracy <strong>${((MODEL_DATA?.accuracy||0.963)*100).toFixed(1)}%</strong> · trained on 90,000 terrain pixels using physics model outputs as labels. Feature importances reveal which terrain properties most influence flood risk:</p>
     <table>
-      <tr><th>Feature</th><th>Importance</th><th>Role in prediction</th></tr>
+      <tr><th>Feature</th><th>Importance</th><th>Why it matters</th></tr>
       ${MODEL_DATA?.feature_importances?Object.entries(MODEL_DATA.feature_importances).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
         <tr><td style="font-family:monospace">${k}</td><td style="font-weight:700">${(v*100).toFixed(1)}%</td>
-        <td>${{elevation:'Absolute land height above sea level',slope:'Terrain steepness — gradient affects drainage speed',twi:'Topographic Wetness Index — natural soil moisture retention',coast_dist:'Proximity to coastline — storm surge source',relief:'Local height variation — controls pooling extent',curvature:'Land concavity — primary pooling indicator'}[k]||k}</td></tr>`).join(''):''}
+        <td style="font-size:10px;color:#71717a">${{elevation:'Directly determines flood susceptibility — lower ground floods first',slope:'Controls runoff speed — flat areas retain water longer',twi:'High TWI means poor drainage and higher moisture',coast_dist:'Proximity to the coast drives surge exposure',relief:'Low relief enables water to pool rather than drain',curvature:'Concave terrain collects water — the dominant predictor'}[k]||k}</td></tr>`).join(''):''}
     </table>
   </section>
 
-  <footer>FloodSense · Tunisia Flood Risk Platform · ${now} · Based on NASA SRTM DEM + Random Forest ML · For operational use verify with Tunisian Civil Protection</footer>
+  <footer>FloodSense · Tunisia Flood Risk Platform · ${now} · Data: NASA SRTM + Random Forest ML</footer>
+  ${S}>setTimeout(()=>window.print(),600)${ES}>
   </body></html>`;
 
   const w=window.open('','_blank');
   w.document.write(html); w.document.close();
-  setTimeout(()=>w.print(),400);
 }
 
 // ── INIT ───────────────────────────────────────────
