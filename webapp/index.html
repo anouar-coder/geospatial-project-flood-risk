@@ -528,6 +528,7 @@ header {
 <script src="animation_data.js"></script>
 <script src="grid_data.js"></script>
 <script src="model_data.js"></script>
+<script src="ml_grid.js"></script>
 <script>
 // ── CONSTANTS ──────────────────────────────────────
 const RC = { none:'#52525b', low:'#0ea5e9', medium:'#f59e0b', high:'#f97316', extreme:'#ef4444' };
@@ -603,41 +604,16 @@ function depthToRisk(d){
   if(d>1.5)return'extreme';if(d>0.75)return'high';if(d>0.25)return'medium';if(d>0.05)return'low';return'none';
 }
 
-// ── ML PREDICTION (client-side) ─────────────────────
-function predictML(elev, slope, twi, coast_dist, relief, curvature){
-  const cs=MODEL_DATA.class_stats;
-  const fi=MODEL_DATA.feature_importances;
-  const pairs=[
-    ['elevation',elev,'elev_mean','elev_std'],
-    ['slope',slope,'slope_mean','slope_std'],
-    ['twi',twi,'twi_mean','twi_std'],
-    ['coast_dist',coast_dist,'coast_mean','coast_std'],
-    ['relief',relief,'relief_mean','relief_std'],
-    ['curvature',curvature,'curv_mean','curv_std'],
-  ];
-  const scores={};
-  for(let cls=0;cls<=4;cls++){
-    const cst=cs[cls];
-    if(!cst){scores[cls]=-1e9;continue;}
-    let score=Math.log(cst.count/90000);
-    pairs.forEach(([fname,val,mk,sk])=>{
-      const w=fi[fname]||0.1;
-      const sigma=Math.max(cst[sk],0.001);
-      const z=(val-cst[mk])/sigma;
-      score+=w*(-0.5*z*z-Math.log(sigma));
-    });
-    scores[cls]=score;
-  }
-  const maxS=Math.max(...Object.values(scores));
-  let sumE=0;
-  const exps={};
-  for(let c=0;c<=4;c++){exps[c]=Math.exp(scores[c]-maxS);sumE+=exps[c];}
-  const probs={};
-  for(let c=0;c<=4;c++) probs[c]=exps[c]/sumE;
-  let pred=0,best=-Infinity;
-  for(let c=0;c<=4;c++) if(scores[c]>best){best=scores[c];pred=c;}
+// ── ML PREDICTION (pre-computed lookup) ──────────────
+// Uses the actual trained Random Forest predictions exported from
+// phase2_ml.py, downsampled to 100×100 grid resolution.
+function predictML(r, c){
+  const cls=ML_GRID.risk_ml[r][c];
+  const highProb=ML_GRID.risk_ml_proba[r][c];
   const names=['none','low','medium','high','extreme'];
-  return{cls:pred,name:names[pred],probs,highProb:probs[3]+probs[4]};
+  const probs=[0,0,0,0,0];
+  probs[cls]=1;
+  return{cls,name:names[cls],probs,highProb};
 }
 
 // Full location analysis
@@ -662,7 +638,7 @@ function analyzeLocation(lat,lon,customRain=null,customSea=null){
     customDepth=fn*(1-t)+fe*t+(fe*seaT*0.3);
   }
 
-  const ml=predictML(elev,slope,twi,coast,relief,curv);
+  const ml=predictML(r,c);
 
   return{
     lat,lon,elev,slope,twi,relief,curv,
@@ -1341,7 +1317,6 @@ function exportReport(){
 
 // ── INIT ───────────────────────────────────────────
 setScenario('extreme');
-buildMlLayer();
 map.fitBounds([[36.6,10.0],[37.2,10.6]],{padding:[50,50]});
 </script>
 </body>

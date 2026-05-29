@@ -334,6 +334,54 @@ def predict_and_save(rf, features, dem, transform, crs, bounds, accuracy, config
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# INTERLUDE — Export ML predictions as JS grid for web frontend
+# ══════════════════════════════════════════════════════════════════════════════
+
+def export_ml_grid_for_js(risk_ml, high_proba, config):
+    """
+    Downsample the 300×300 ML prediction to 100×100 and export as JS.
+    This lets the frontend look up pre-computed ML predictions instead of
+    re-implementing the Random Forest in JavaScript.
+
+    Downsampling: 3×3 blocks → mode for class, mean for probability.
+    """
+    from scipy.stats import mode as scipy_mode
+
+    rows, cols = risk_ml.shape
+    # 300/100 = 3
+    factor = rows // 100
+    risk_ds = np.zeros((100, 100), dtype=np.uint8)
+    proba_ds = np.zeros((100, 100), dtype=np.float32)
+
+    for r in range(100):
+        for c in range(100):
+            r0, c0 = r * factor, c * factor
+            block_class = risk_ml[r0:r0+factor, c0:c0+factor]
+            block_proba = high_proba[r0:r0+factor, c0:c0+factor]
+            risk_ds[r, c] = scipy_mode(block_class, axis=None, keepdims=False)[0]
+            proba_ds[r, c] = round(float(block_proba.mean()), 4)
+
+    # Build JS file
+    risk_rows = [row.tolist() for row in risk_ds]
+    proba_rows = [row.tolist() for row in proba_ds]
+
+    js_content = "const ML_GRID = {\n"
+    js_content += '  "rows": 100, "cols": 100,\n'
+    js_content += f'  "risk_ml": {json.dumps(risk_rows)},\n'
+    js_content += f'  "risk_ml_proba": {json.dumps(proba_rows)},\n'
+    js_content += "};\n"
+
+    # Export to webapp directory
+    os.makedirs(config["data_dir"] + "../webapp", exist_ok=True)
+    out_path = config["data_dir"] + "../webapp/ml_grid.js"
+    with open(out_path, 'w') as f:
+        f.write(js_content)
+
+    print(f"\n[JS] ML grid exported: {os.path.abspath(out_path)}  ({100*100} cells)")
+    return out_path
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # STEP 6 — Visualization dashboard
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -468,6 +516,7 @@ if __name__ == "__main__":
     risk_ml, high_proba, meta = predict_and_save(
         rf, features, dem, transform, crs, bounds, accuracy, CONFIG
     )
+    export_ml_grid_for_js(risk_ml, high_proba, CONFIG)
     build_dashboard(dem, flood_extreme, risk_ml, high_proba, meta, bounds, CONFIG)
 
     print("\n" + "=" * 60)
